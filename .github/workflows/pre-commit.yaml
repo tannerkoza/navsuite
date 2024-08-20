@@ -36,6 +36,3 @@ jobs:
       - name: Run pre-commit hooks
         run: |
           rye run pre-commit run --all-files
-
-      - name: Lint GitHub Actions
-        uses: eifinger/actionlint-action@v1
