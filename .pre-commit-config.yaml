@@ -1,0 +1,11 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.7
+    hooks:
+      # run linter with fixes and import sorting
+      - id: ruff
+        types_or: [python, pyi, jupyter]
+        args: [--select, I, --fix]
+      # run the formatter
+      - id: ruff-format
+        types_or: [python, pyi, jupyter]
