@@ -2,12 +2,11 @@
 
 __all__ = ["ecef2lla"]
 
-from typing import NamedTuple
-
-import numba as nb
 import numpy as np
+import numba as nb
 
-from navtools.constants import WGS84_E, WGS84_R0
+from typing import NamedTuple
+from navtools.constants import WGS84_R0, WGS84_E
 
 
 # coordinate/reference frame types
