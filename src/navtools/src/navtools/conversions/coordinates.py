@@ -46,8 +46,8 @@ class GEODETIC(NamedTuple):
 
 # earth-centered earth-fixed (ECEF)
 @nb.njit(cache=True, fastmath=True)
-def ecef2lla(x: np.array, y: np.array, z: np.array) -> GEODETIC:
-    return True
+def ecef2lla(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> GEODETIC:
+    return GEODETIC(lat=32.0, lon=-85.0, alt=200)
 
 
 # local navigation/tangent-plane (NED/ENU)

@@ -1,4 +1,4 @@
-name: Pre-Commit
+name: Pre-Commit & Type Checking
 
 on: 
   - push
@@ -36,6 +36,10 @@ jobs:
       - name: Run pre-commit hooks
         run: |
           rye run pre-commit run --all-files
+
+      - name: Run mypy
+        run: |
+          rye run mypy src/ tests/ --ignore-missing-imports
 
       - name: Commit changes
         if: always()
