@@ -9,7 +9,6 @@
 #   generate-hashes: false
 #   universal: false
 
--e file:.
 -e file:src/navsim
 -e file:src/navtools
 certifi==2024.7.4
