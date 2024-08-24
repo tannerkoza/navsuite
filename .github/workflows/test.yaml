@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         if: steps.setup-rye.outputs.cache-hit != 'true'
         run: |
-          rye sync --no-lock
+          rye sync
               
       - name: Test with pytest
         run: |
