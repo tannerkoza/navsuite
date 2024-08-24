@@ -39,7 +39,7 @@ jobs:
 
       - name: Run mypy
         run: |
-          rye run mypy src/ tests/ --install-types --ignore-missing-imports
+          rye run mypy src/ tests/ --install-types --non-interactive --ignore-missing-imports
 
       - name: Commit changes
         if: always()
