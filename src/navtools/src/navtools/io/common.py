@@ -17,11 +17,13 @@ import requests
 import unlzw3
 
 # custom types and function interfaces
-DecompressionFunction = Callable[[pl.Path], pl.Path]
+DecompressionFunction = Callable[[pl.Path], pl.Path | list[pl.Path] | object]
 
 
 # decompression
-def decompress(compressed_file_path: str | os.PathLike) -> pl.Path | list:
+def decompress(
+    compressed_file_path: str | os.PathLike,
+) -> pl.Path | list[pl.Path] | object:
     """decompresses files with extensions indicated by VALID_COMPRESSIONS
 
     Parameters
@@ -55,7 +57,7 @@ def decompress(compressed_file_path: str | os.PathLike) -> pl.Path | list:
     return decompressed_path
 
 
-def _decompress_unlzw(path: pl.Path):
+def _decompress_unlzw(path: pl.Path) -> pl.Path:
     data = unlzw3.unlzw(inp=path)
 
     decompressed_path = _build_decompressed_path(path=path)
@@ -65,7 +67,7 @@ def _decompress_unlzw(path: pl.Path):
     return decompressed_path
 
 
-def _decompress_gzip(path: pl.Path):
+def _decompress_gzip(path: pl.Path) -> pl.Path:
     decompressed_path = _build_decompressed_path(path=path)
 
     with gzip.open(filename=path, mode="rb") as compressed_file:
@@ -77,7 +79,7 @@ def _decompress_gzip(path: pl.Path):
     return decompressed_path
 
 
-def _decompress_tar(path: pl.Path):
+def _decompress_tar(path: pl.Path) -> list[pl.Path]:
     file = tarfile.open(name=path)
     file.extractall(path=path.parent)
     file.close()
@@ -86,12 +88,13 @@ def _decompress_tar(path: pl.Path):
 
     return decompressed_paths
 
+    # ".zip": None,
+    # ".7z": None,
+
 
 VALID_COMPRESSIONS = {
-    ".7z": None,
     ".gz": _decompress_gzip,
     ".z": _decompress_unlzw,
-    ".zip": None,
     ".tar.gz": _decompress_tar,
 }
 
@@ -149,7 +152,7 @@ class FileDownloader(object):
         self.directory.mkdir(parents=True, exist_ok=True)
 
         # attributes
-        self._file_paths = []
+        self._file_paths: list = []
 
     def download(
         self, url: str, nparents: int | None = None, reload: bool = False
