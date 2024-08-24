@@ -37,6 +37,10 @@ jobs:
         run: |
           rye run pre-commit run --all-files
 
+      - name: Install extra mypy stubs
+        run: |
+          rye run mypy --install-types
+
       - name: Run mypy
         run: |
           rye run mypy src/ tests/ --ignore-missing-imports
