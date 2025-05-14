@@ -1,8 +1,9 @@
 """constants.py contains constants commonly used in navigation"""
 
 from __future__ import annotations
-from math import sqrt
+
 from dataclasses import dataclass
+from math import sqrt
 
 # physical
 """a collection of physical constants used across physics in general

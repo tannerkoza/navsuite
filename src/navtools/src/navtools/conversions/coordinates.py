@@ -18,7 +18,7 @@ import numba as nb
 import numpy as np
 
 from navtools.constants import GeodeticDatum
-from navtools.types import ECI, ECEF, GEODETIC, NED, ENU
+from navtools.types import ECEF, ECI, ENU, GEODETIC, NED
 
 
 # earth-centered earth-fixed (ECEF)
@@ -67,9 +67,7 @@ def ecef2geodetic(
     lon = np.arctan2(y, x)
     alt = (beta - datum.r0 * T) * np.cos(lat) + (
         z - np.sign(z) * datum.r0 * np.sqrt(1 - datum.eccentricity**2)
-    ) * np.sin(
-        lat
-    )  # Eq. C.38
+    ) * np.sin(lat)  # Eq. C.38
 
     return GEODETIC(lat=lat, lon=lon, alt=alt)
 
@@ -224,7 +222,6 @@ def geodetic2ecef(
     datum: GeodeticDatum = GeodeticDatum.from_datum(datum_name="wgs84"),
     deg: bool = False,
 ) -> ECEF:
-
     if deg:
         lat = np.radians(lat)
         lon = np.radians(lon)
