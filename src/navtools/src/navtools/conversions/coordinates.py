@@ -63,7 +63,9 @@ def ecef2geodetic(
     lon = np.arctan2(y, x)
     alt = (beta - datum.r0 * T) * np.cos(lat) + (
         z - np.sign(z) * datum.r0 * np.sqrt(1 - datum.eccentricity**2)
-    ) * np.sin(lat)  # Eq. C.38
+    ) * np.sin(
+        lat
+    )  # Eq. C.38
 
     return GEODETIC(lat=lat, lon=lon, alt=alt)
 
@@ -105,18 +107,15 @@ def C_ecef2enu(
         lat0 = np.radians(lat0)
         lon0 = np.radians(lon0)
 
+    cos_lat0 = np.cos(lat0)
+    sin_lat0 = np.sin(lat0)
+    cos_lon0 = np.cos(lon0)
+    sin_lon0 = np.sin(lon0)
+
     # Eq. 2.158 adapted for ENU instead of NED
-    east = -np.sin(lon0) * x + np.cos(lon0) * y
-    north = (
-        -np.sin(lat0) * np.cos(lon0) * x
-        + -np.sin(lat0) * np.sin(lon0) * y
-        + np.cos(lat0) * z
-    )
-    up = (
-        np.cos(lat0) * np.cos(lon0) * x
-        + np.cos(lat0) * np.sin(lon0) * y
-        + np.sin(lat0) * z
-    )
+    east = -sin_lon0 * x + cos_lon0 * y
+    north = -sin_lat0 * cos_lon0 * x + -sin_lat0 * sin_lon0 * y + cos_lat0 * z
+    up = cos_lat0 * cos_lon0 * x + cos_lat0 * sin_lon0 * y + sin_lat0 * z
 
     return ENU(east=east, north=north, up=up)
 
@@ -200,13 +199,13 @@ def geodetic2ecef(
         lat = np.radians(lat)
         lon = np.radians(lon)
 
-    # transverse radius of curvature
-    re = datum.r0 / np.sqrt(1 - (datum.eccentricity * np.sin(lat)) ** 2)  # Eq. 2.106
-
     cos_lat = np.cos(lat)
     cos_lon = np.cos(lon)
     sin_lat = np.sin(lat)
     sin_lon = np.sin(lon)
+
+    # transverse radius of curvature
+    re = datum.r0 / np.sqrt(1 - (datum.eccentricity * sin_lat) ** 2)  # Eq. 2.106
 
     # Eq. 2.112
     x = (re + alt) * cos_lat * cos_lon
@@ -221,21 +220,193 @@ def geodetic2enu(
     lat: float | np.ndarray,
     lon: float | np.ndarray,
     alt: float | np.ndarray,
+    lat0: float,
+    lon0: float,
+    alt0: float,
+    datum: GeodeticDatum = GeodeticDatum.from_datum(datum_name="wgs84"),
     deg: bool = False,
 ) -> ENU:
-    pass
+    """converts geodetic position to local tangent enu, Principles of GNSS, Inertial, and
+    Multisensor Integrated Navigation Systems, Groves (2013), Chapter 2.5.4
+
+    Parameters
+    ----------
+    lat : float | np.ndarray
+        geodetic latitude, [rad]
+    lon : float | np.ndarray
+        geodetic longitude, [rad]
+    alt : float | np.ndarray
+        altitude, datum units
+    lat0 : float
+        local tangent origin latitude
+    lon0 : float
+        local tangent origin longitude
+    alt0 : float
+        local tangent origin altitude (HAE), datum units
+    datum : GeodeticDatum, optional
+        geodetic datum describing ellipsoid, by default GeodeticDatum.from_datum(datum_name="wgs84")
+    deg : bool, optional
+        geodetic units boolean, by default False
+
+    Returns
+    -------
+    ENU
+        enu local tangent position
+    """
+    x, y, z = geodetic2ecef(lat=lat, lon=lon, alt=alt, datum=datum, deg=deg)
+    x0, y0, z0 = geodetic2ecef(lat=lat0, lon=lon0, alt=alt0, datum=datum, deg=deg)
+
+    enu = C_ecef2enu(x=x - x0, y=y - y0, z=z - z0, lat0=lat0, lon0=lon0, deg=deg)
+
+    return enu
 
 
 # local navigation/tangent-plane (ENU)
 @nb.njit(cache=True, fastmath=True)
-def enu2ecef(
-    east: float | np.ndarray, north: float | np.ndarray, up: float | np.ndarray
+def C_enu2ecef(
+    east: float | np.ndarray,
+    north: float | np.ndarray,
+    up: float | np.ndarray,
+    lat0: float,
+    lon0: float,
+    deg: bool = False,
 ) -> ECEF:
-    pass
+    """rotates enu vector to geocentric coordinates, Principles of GNSS, Inertial, and
+    Multisensor Integrated Navigation Systems, Groves (2013), Chapter 2.5.4
+
+    Parameters
+    ----------
+    east : float | np.ndarray
+        east local tangent component
+    north : float | np.ndarray
+        north local tangent component
+    up : float | np.ndarray
+        up local tangent component
+    lat0 : float
+        local tangent origin latitude
+    lon0 : float
+        local tangent origin longitude
+    deg : bool, optional
+        geodetic units boolean, by default False
+
+    Returns
+    -------
+    ECEF
+        ecef vector
+    """
+
+    if deg:
+        lat0 = np.radians(lat0)
+        lon0 = np.radians(lon0)
+
+    cos_lat0 = np.cos(lat0)
+    sin_lat0 = np.sin(lat0)
+    cos_lon0 = np.cos(lon0)
+    sin_lon0 = np.sin(lon0)
+
+    # Eq. 2.158 adapted for ENU instead of NED
+    x = -sin_lon0 * east + -sin_lat0 * cos_lat0 * north + cos_lat0 * cos_lon0 * up
+    y = cos_lon0 * east + -sin_lat0 * sin_lon0 * north + cos_lat0 * sin_lon0 * up
+    z = cos_lat0 * north + sin_lat0 * up
+
+    return ECEF(x=x, y=y, z=z)
 
 
-@nb.njit(cache=True, fastmath=True)
+def enu2ecef(
+    east: float | np.ndarray,
+    north: float | np.ndarray,
+    up: float | np.ndarray,
+    lat0: float,
+    lon0: float,
+    alt0: float,
+    datum: GeodeticDatum = GeodeticDatum.from_datum(datum_name="wgs84"),
+    deg: bool = False,
+) -> ECEF:
+    """converts local tangent enu position to geocentric, Principles of GNSS, Inertial, and
+    Multisensor Integrated Navigation Systems, Groves (2013), Chapter 2.5.4
+
+    Parameters
+    ----------
+    east : float | np.ndarray
+        east position, datum units
+    north : float | np.ndarray
+        north position, datum units
+    up : float | np.ndarray
+        up position, datum units
+    lat0 : float
+        local tangent origin latitude
+    lon0 : float
+        local tangent origin longitude
+    alt0 : float
+        local tangent origin altitude
+    datum : GeodeticDatum, optional
+        geodetic datum describing ellipsoid, by default GeodeticDatum.from_datum(datum_name="wgs84")
+    deg : bool, optional
+        geodetic units boolean, by default False
+
+    Returns
+    -------
+    ECEF
+        geocentric position
+    """
+    dx, dy, dz = C_enu2ecef(
+        east=east, north=north, up=up, lat0=lat0, lon0=lon0, deg=deg
+    )
+    x0, y0, z0 = geodetic2ecef(
+        lat=lat0, lon=lon0, alt=alt0, datum=datum, deg=deg
+    )  # Eqs. 2.158 and 2.160
+
+    return ECEF(x=x0 + dx, y=y0 + dy, z=z0 + dz)
+
+
 def enu2geodetic(
-    east: float | np.ndarray, north: float | np.ndarray, up: float | np.ndarray
+    east: float | np.ndarray,
+    north: float | np.ndarray,
+    up: float | np.ndarray,
+    lat0: float,
+    lon0: float,
+    alt0: float,
+    datum: GeodeticDatum = GeodeticDatum.from_datum(datum_name="wgs84"),
+    deg: bool = False,
 ) -> GEODETIC:
-    pass
+    """converts local tangent enu position to geodetic, Principles of GNSS, Inertial, and
+    Multisensor Integrated Navigation Systems, Groves (2013), Chapter 2.5.4
+
+    Parameters
+    ----------
+    east : float | np.ndarray
+        east position, datum units
+    north : float | np.ndarray
+        north position, datum units
+    up : float | np.ndarray
+        up position, datum units
+    lat0 : float
+        local tangent origin latitude
+    lon0 : float
+        local tangent origin longitude
+    alt0 : float
+        local tangent origin altitude
+    datum : GeodeticDatum, optional
+        geodetic datum describing ellipsoid, by default GeodeticDatum.from_datum(datum_name="wgs84")
+    deg : bool, optional
+        geodetic units boolean, by default False
+
+    Returns
+    -------
+    GEODETIC
+        geodetic position
+    """
+    x, y, z = enu2ecef(
+        east=east,
+        north=north,
+        up=up,
+        lat0=lat0,
+        lon0=lon0,
+        alt0=alt0,
+        datum=datum,
+        deg=deg,
+    )
+
+    geodetic = ecef2geodetic(x=x, y=y, z=z, datum=datum)
+
+    return geodetic
