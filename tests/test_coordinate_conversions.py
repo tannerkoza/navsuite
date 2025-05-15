@@ -1,7 +1,6 @@
-import numpy as np
 import navtools.conversions as ntc
+import numpy as np
 from navtools.constants import GEODETIC_DATUMS
-
 from pytest import approx
 
 
