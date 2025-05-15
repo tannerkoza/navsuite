@@ -3,14 +3,10 @@
 __all__ = [
     "ecef2geodetic",
     "ecef2enu",
-    "ecef2ned",
     "geodetic2ecef",
     "geodetic2enu",
-    "geodetic2ned",
     "enu2ecef",
-    "ned2ecef",
     "enu2geodetic",
-    "ned2geodetic",
 ]
 
 
@@ -18,7 +14,7 @@ import numba as nb
 import numpy as np
 
 from navtools.constants import GeodeticDatum
-from navtools.types import ECEF, ECI, ENU, GEODETIC, NED
+from navtools.types import ECI, ECEF, GEODETIC, ENU
 
 
 # earth-centered earth-fixed (ECEF)
@@ -171,50 +167,7 @@ def ecef2enu(
     return enu
 
 
-def ecef2ned(
-    x: float | np.ndarray,
-    y: float | np.ndarray,
-    z: float | np.ndarray,
-    lat0: float,
-    lon0: float,
-    alt0: float,
-    datum: GeodeticDatum = GeodeticDatum.from_datum(datum_name="wgs84"),
-    deg: bool = False,
-) -> NED:
-    """converts geocentric position to local tangent ned, Principles of GNSS, Inertial, and
-    Multisensor Integrated Navigation Systems, Groves (2013), Chapter 2.5.4
-
-    Parameters
-    ----------
-    x : float | np.ndarray
-        x geocentric position, datum units
-    y : float | np.ndarray
-        y geocentric position, datum units
-    z : float | np.ndarray
-        z geocentric position, datum units
-    lat0 : float
-        local tangent origin latitude
-    lon0 : float
-        local tangent origin longitude
-    alt0 : float
-        local tangent origin altitude (HAE), datum units
-    datum : GeodeticDatum, optional
-        geodetic datum describing ellipsoid, by default GeodeticDatum.from_datum(datum_name="wgs84")
-    deg : bool, optional
-        geodetic units boolean, by default False
-
-    Returns
-    -------
-    NED
-        ned local tangent position
-    """
-
-    enu = ecef2enu(x=x, y=y, z=z, lat0=lat0, lon0=lon0, alt0=alt0, datum=datum, deg=deg)
-
-    return NED(north=enu.north, east=enu.east, down=-enu.up)
-
-
-# geodetic "lla" (GEODETIC)
+# curvilinear (GEODETIC)
 def geodetic2ecef(
     lat: float | np.ndarray,
     lon: float | np.ndarray,
@@ -246,20 +199,7 @@ def geodetic2enu(
     pass
 
 
-@nb.njit(cache=True, fastmath=True)
-def geodetic2ned(
-    lat: float | np.ndarray,
-    lon: float | np.ndarray,
-    alt: float | np.ndarray,
-    deg: bool = False,
-) -> NED:
-    pass
-
-
-# local navigation/tangent-plane (NED/ENU)
-C_enu_to_ned = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
-
-
+# local navigation/tangent-plane (ENU)
 @nb.njit(cache=True, fastmath=True)
 def enu2ecef(
     east: float | np.ndarray, north: float | np.ndarray, up: float | np.ndarray
@@ -268,21 +208,7 @@ def enu2ecef(
 
 
 @nb.njit(cache=True, fastmath=True)
-def ned2ecef(
-    north: float | np.ndarray, east: float | np.ndarray, down: float | np.ndarray
-) -> ECEF:
-    pass
-
-
-@nb.njit(cache=True, fastmath=True)
 def enu2geodetic(
     east: float | np.ndarray, north: float | np.ndarray, up: float | np.ndarray
-) -> ECEF:
-    pass
-
-
-@nb.njit(cache=True, fastmath=True)
-def ned2geodetic(
-    north: float | np.ndarray, east: float | np.ndarray, down: float | np.ndarray
-) -> ECEF:
+) -> GEODETIC:
     pass
