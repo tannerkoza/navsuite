@@ -18,6 +18,8 @@ coverage==7.6.1
     # via pytest-cov
 distlib==0.3.8
     # via virtualenv
+exceptiongroup==1.2.2
+    # via pytest
 filelock==3.15.4
     # via virtualenv
 identify==2.6.0
@@ -47,6 +49,10 @@ pytest==8.3.2
 pytest-cov==5.0.0
 pyyaml==6.0.2
     # via pre-commit
+tomli==2.0.1
+    # via coverage
+    # via mypy
+    # via pytest
 typing-extensions==4.12.2
     # via mypy
 virtualenv==20.26.3
