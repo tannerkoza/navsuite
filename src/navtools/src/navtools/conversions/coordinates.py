@@ -175,16 +175,43 @@ def geodetic2ecef(
     datum: GeodeticDatum = GeodeticDatum.from_datum(datum_name="wgs84"),
     deg: bool = False,
 ) -> ECEF:
+    """converts geodetic curvilinear position to geocentric position, Principles of GNSS, Inertial, and
+    Multisensor Integrated Navigation Systems, Groves (2013), Chapter 2.4.3
+
+    Parameters
+    ----------
+    lat : float | np.ndarray
+        geodetic latitude, [rad]
+    lon : float | np.ndarray
+        geodetic longitude, [rad]
+    alt : float | np.ndarray
+        altitude, datum units
+    datum : GeodeticDatum, optional
+        geodetic datum describing ellipsoid, by default GeodeticDatum.from_datum(datum_name="wgs84")
+    deg : bool, optional
+        geodetic units boolean, by default False
+
+    Returns
+    -------
+    ECEF
+        geocentric position
+    """
     if deg:
         lat = np.radians(lat)
         lon = np.radians(lon)
 
-    # prime vertical radius of curvature
-    N = datum.r0**2 / np.hypot(datum.r0 * np.cos(lat), datum.rp * np.sin(lat))
+    # transverse radius of curvature
+    re = datum.r0 / np.sqrt(1 - (datum.eccentricity * np.sin(lat)) ** 2)  # Eq. 2.106
 
-    x = (N + alt) * np.cos(lat) * np.cos(lon)
-    y = (N + alt) * np.cos(lat) * np.sin(lon)
-    z = (N * (datum.rp / datum.r0) ** 2 + alt) * np.sin(lat)
+    cos_lat = np.cos(lat)
+    cos_lon = np.cos(lon)
+    sin_lat = np.sin(lat)
+    sin_lon = np.sin(lon)
+
+    # Eq. 2.112
+    x = (re + alt) * cos_lat * cos_lon
+    y = (re + alt) * cos_lat * sin_lon
+    z = ((1 - datum.eccentricity**2) * re + alt) * sin_lat
 
     return ECEF(x=x, y=y, z=z)
 
