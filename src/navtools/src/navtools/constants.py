@@ -1,9 +1,11 @@
-"""constants.py contains constants commonly used in navigation"""
+"""constants.py contains constants and datums commonly used in navigation"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from math import sqrt
+
+from navtools.types import Datum
 
 # physical
 """a collection of physical constants used across physics in general
@@ -15,6 +17,11 @@ GRAVITY: float = 9.80665  # acceleration due to gravity (Earth) [m/s^2]
 # global datums
 """ a collection of constants specific to global datums (e.g., WGS84, GRS80, etc.) 
 """
+GEODETIC_DATUMS: dict[str, Datum] = {
+    "grs80": Datum(name="GRS-80 (1979)", r0=6378137.0, rp=6356752.31414036),
+    "wgs84": Datum(name="WGS-84 (1984)", r0=6378137.0, rp=6356752.31424518),
+    "pz90.11": Datum(name="ПЗ-90 (2011)", r0=6378136.0, rp=6356751.3618),
+}
 EARTH_RATE: float = 7.292115e-5  # WGS84 Earth rotation rate [rad/s]
 
 
@@ -37,12 +44,6 @@ class GeodeticDatum:
     flattening: float
     third_flattening: float
     eccentricity: float
-    default_models = {
-        # Earth ellipsoid models
-        "grs80": {"name": "GRS-80 (1979)", "r0": 6378137.0, "rp": 6356752.31414036},
-        "wgs84": {"name": "WGS-84 (1984)", "r0": 6378137.0, "rp": 6356752.31424518},
-        "pz90.11": {"name": "ПЗ-90 (2011)", "r0": 6378136.0, "rp": 6356751.3618},
-    }
 
     def __init__(
         self,
@@ -91,8 +92,8 @@ class GeodeticDatum:
         """
 
         return cls(
-            cls.default_models[datum_name]["r0"],
-            cls.default_models[datum_name]["rp"],
-            name=cls.default_models[datum_name]["name"],
+            r0=GEODETIC_DATUMS[datum_name].r0,
+            rp=GEODETIC_DATUMS[datum_name].rp,
+            name=GEODETIC_DATUMS[datum_name].name,
             model=datum_name,
         )
