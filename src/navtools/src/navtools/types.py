@@ -1,8 +1,8 @@
 """types.py contains containers and numpy dtypes for commonly used representations, measurement sets, etc."""
 
-import numpy as np
-
 from typing import NamedTuple
+
+import numpy as np
 
 
 # geodetic datums

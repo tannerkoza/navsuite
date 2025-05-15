@@ -14,7 +14,7 @@ import numba as nb
 import numpy as np
 
 from navtools.constants import GeodeticDatum
-from navtools.types import ECI, ECEF, GEODETIC, ENU
+from navtools.types import ECEF, ECI, ENU, GEODETIC
 
 
 # earth-centered earth-fixed (ECEF)
