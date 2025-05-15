@@ -1,7 +1,7 @@
-import numpy as np
-import numba as nb
 from typing import Callable, Generator
 
+import numba as nb
+import numpy as np
 from numpy.typing import NDArray
 
 
