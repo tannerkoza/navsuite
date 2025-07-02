@@ -35,3 +35,58 @@ class ENU(NamedTuple):
     east: float | np.ndarray
     north: float | np.ndarray
     up: float | np.ndarray
+
+
+# emitter & observable dtypes
+true_observable_dtype = np.dtype(
+    {
+        "names": [
+            "ts",
+            "id",
+            "system",
+            "signal",
+            "freq",
+            "cn0",
+            "range",
+            "range_rate",
+        ],
+        "formats": ["f8", "H", "H", "H", "f8", "f8", "f8", "f8", "f8", "f8"],
+    }
+)
+
+raw_observable_dtype = np.dtype(
+    {
+        "names": [
+            "ts",
+            "id",
+            "system",
+            "signal",
+            "freq",
+            "cn0",
+            "prange",
+            "prange_var",
+            "prange_rate",
+            "prange_rate_var",
+        ],
+        "formats": ["f8", "H", "H", "H", "f8", "f8", "f8", "f8", "f8", "f8"],
+    }
+)
+
+emitter_dtype = np.dtype(
+    {
+        "names": [
+            "ts",
+            "id",
+            "system",
+            "clock_bias",
+            "clock_drift",
+            "xpos",
+            "ypos",
+            "zpos",
+            "xvel",
+            "yvel",
+            "zvel",
+        ],
+        "formats": ["f8", "H", "H", "f8", "f8", "f8", "f8", "f8", "f8", "f8", "f8"],
+    }
+)
