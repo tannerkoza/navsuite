@@ -5,7 +5,10 @@ description = "Add your description here"
 authors = [
     { name = "Tanner Koza", email = "kozatanner@gmail.com" }
 ]
-dependencies = []
+dependencies = [
+    "sgp4>=2.24",
+    "astropy>=7.1.0",
+]
 readme = "README.md"
 requires-python = ">= 3.10"
 
