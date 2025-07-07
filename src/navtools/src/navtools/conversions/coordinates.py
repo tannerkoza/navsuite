@@ -63,12 +63,13 @@ def ecef2geodetic(
     lon = np.arctan2(y, x)
     alt = (beta - datum.r0 * T) * np.cos(lat) + (
         z - np.sign(z) * datum.r0 * np.sqrt(1 - datum.eccentricity**2)
-    ) * np.sin(lat)  # Eq. C.38
+    ) * np.sin(
+        lat
+    )  # Eq. C.38
 
     return GEODETIC(lat=lat, lon=lon, alt=alt)
 
 
-@nb.njit(cache=True, fastmath=True)
 def C_ecef2enu(
     x: float | np.ndarray,
     y: float | np.ndarray,
