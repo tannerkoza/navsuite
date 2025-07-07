@@ -12,9 +12,44 @@
 -e file:.
 -e file:src/navsim
 -e file:src/navtools
-llvmlite==0.43.0
+aspn23 @ git+ssh://git@git.aspn.us/pntos/firehose-outputs.git@d425e26330e62371038f14ad12a8d8b4374698a6#subdirectory=aspn-py
+    # via navtools
+aspn23-lcm @ git+ssh://git@git.aspn.us/pntos/firehose-outputs.git@50b596d2c349ceb98b60ab6aecc91961424bcec8#subdirectory=lcm/python
+    # via navtools
+astropy==7.1.0
+    # via navsim
+astropy-iers-data==0.2025.7.7.0.39.39
+    # via astropy
+certifi==2025.6.15
+    # via requests
+charset-normalizer==3.4.2
+    # via requests
+idna==3.10
+    # via requests
+lcm==1.5.1
+    # via aspn23-lcm
+llvmlite==0.44.0
     # via numba
-numba==0.60.0
+numba==0.61.2
     # via navtools
 numpy==2.0.1
+    # via aspn23
+    # via astropy
     # via numba
+    # via pyerfa
+packaging==25.0
+    # via astropy
+pyerfa==2.0.1.5
+    # via astropy
+pyyaml==6.0.2
+    # via astropy
+requests==2.32.4
+    # via navtools
+sgp4==2.24
+    # via navsim
+tqdm==4.67.1
+    # via navtools
+unlzw3==0.2.3
+    # via navtools
+urllib3==2.5.0
+    # via requests
