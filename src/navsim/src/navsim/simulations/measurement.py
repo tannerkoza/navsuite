@@ -12,7 +12,6 @@ from navsim.emitters import SatelliteEmitters
 
 class MeasurementSimulation:
     LOOKAHEAD_INTERVAL = 30  # [s]
-    MAX_DURATION_PERCENTAGE = 25  # [%]
 
     def __init__(self, constellations: list[str], mask_angles: list[float]):
         self._constellations = constellations
@@ -152,7 +151,7 @@ class MeasurementSimulation:
         return status, az, el
 
     def _filter_emitters(self, emitters: dict, rx_pos: ArrayLike):
-        duration_visible = []
+        timesteps_visible = []
         emitter_ids = []
 
         for emitter_id, (emitter_pos, _) in emitters.items():
@@ -160,16 +159,13 @@ class MeasurementSimulation:
                 emitter_id=emitter_id, rx_pos=rx_pos, emitter_pos=emitter_pos
             )
 
-            duration_visible.append(
-                status.sum() * MeasurementSimulation.LOOKAHEAD_INTERVAL
-            )
+            timesteps_visible.append(status.sum())
             emitter_ids.append(emitter_id)
 
-        duration_visible = np.array(duration_visible)
+        timesteps_visible = np.array(timesteps_visible)
         emitter_ids = np.array(emitter_ids)
 
-        max_dv_percentage = 100.0 * (duration_visible / duration_visible.max())
-        removal_mask = max_dv_percentage < MeasurementSimulation.MAX_DURATION_PERCENTAGE
+        removal_mask = timesteps_visible == 0
         emitters_to_remove = emitter_ids[removal_mask]
 
         self._emitters.remove_emitters(emitter_id=emitters_to_remove)
