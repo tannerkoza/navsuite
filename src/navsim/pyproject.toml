@@ -6,7 +6,7 @@ authors = [
     { name = "Tanner Koza", email = "kozatanner@gmail.com" }
 ]
 dependencies = [
-    "navtools==0.1.0",
+    "navtools @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navtools",
     "sgp4>=2.24",
     "prompt-toolkit>=3.0.51",
     "tqdm>=4.67.1",
@@ -21,12 +21,11 @@ requires-python = ">= 3.10"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
-managed = true
-dev-dependencies = []
-
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/navsim"]
+
+[tool.uv.sources]
+navtools = { workspace = true }
