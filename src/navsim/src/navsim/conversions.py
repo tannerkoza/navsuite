@@ -43,14 +43,6 @@ def C_teme2itrf(time: Time | list[Time]):
     # ERFA: gst from UT1
     gst = erfa.gmst82(jd1, jd2)
 
-    # pmmat: vectorized version
-    # pmmats = np.array([erfa.pom00(x, y, 0.0) for x, y in zip(xp, yp)])
-
-    # Compute final C matrices (c2tcio: identity CIP matrix)
-    # C = np.array([erfa.c2tcio(np.eye(3), g, pm) for g, pm in zip(gst, pmmats)])
-
-    # gst = erfa.gmst82(jd1, jd2)
-
     pmmat = erfa.pom00(xp, yp, 0)
     C = erfa.c2tcio(np.eye(3), gst, pmmat)
 
