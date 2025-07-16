@@ -129,7 +129,9 @@ def _build_decompressed_path(path: pl.Path):
 class FileDownloader(object):
     TEMP_DIRECTORY_EXPIRATION_DAYS = 5
 
-    def __init__(self, directory: str | os.PathLike | None = None):
+    def __init__(
+        self, directory: str | os.PathLike | None = None, disable_warning: bool = False
+    ):
         """a class used for downloading files from a URL and saving them to a specified or default local or temporary directory
 
         Parameters
@@ -152,10 +154,14 @@ class FileDownloader(object):
         self.directory.mkdir(parents=True, exist_ok=True)
 
         # attributes
+        self._disable_warning = disable_warning
         self._file_paths: list = []
 
     def download(
-        self, url: str, nparents: int | None = None, reload: bool = False
+        self,
+        url: str,
+        nparents: int | None = None,
+        reload: bool = False,
     ) -> pl.Path:
         """downloads file from URL and saves to directory
 
@@ -177,17 +183,33 @@ class FileDownloader(object):
         self.current_url = pl.Path(url)
         write_path = self._build_write_path(nparents=nparents)
 
+        if write_path.suffix in VALID_COMPRESSIONS:
+            is_compressed = True
+
         if write_path.exists() and not reload:
-            warnings.warn(
-                message="requested file already exists and will not be updated. Set reload argument to True to re-download from requested url.",
-                category=RuntimeWarning,
-                stacklevel=2,
-            )
+            if not self._disable_warning:
+                warnings.warn(
+                    message="requested file already exists and will not be updated. Set reload argument to True to re-download from requested url.",
+                    category=RuntimeWarning,
+                    stacklevel=2,
+                )
+
+            if is_compressed:
+                decompressed_path = write_path.with_suffix("")
+
+                if decompressed_path.exists():
+                    write_path = decompressed_path
+                else:
+                    write_path = decompress(compressed_file_path=write_path)
+
             return write_path
 
         with open(file=write_path, mode="wb") as file:
             response = requests.get(url=url)
             file.write(response.content)
+
+        if is_compressed:
+            write_path = decompress(compressed_file_path=write_path)
 
         return write_path
 
