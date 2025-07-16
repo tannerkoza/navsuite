@@ -1,7 +1,7 @@
 [project]
 name = "navsuite"
 version = "0.1.0"
-description = "rye workspace for "
+description = ""
 authors = [
     { name = "Tanner Koza", email = "kozatanner@gmail.com" }
 ]
