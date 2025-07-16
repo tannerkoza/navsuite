@@ -185,6 +185,8 @@ class FileDownloader(object):
 
         if write_path.suffix in VALID_COMPRESSIONS:
             is_compressed = True
+        else:
+            is_compressed = False
 
         if write_path.exists() and not reload:
             if not self._disable_warning:
