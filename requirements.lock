@@ -56,6 +56,8 @@ scipy==1.15.3
     # via navsim
 sgp4==2.24
     # via navsim
+tomli==2.2.1
+    # via navsim
 tqdm==4.67.1
     # via navsim
 types-requests==2.32.4.20250611

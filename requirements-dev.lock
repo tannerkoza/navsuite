@@ -114,6 +114,7 @@ snakeviz==2.2.2
 tomli==2.2.1
     # via coverage
     # via mypy
+    # via navsim
     # via pytest
 tornado==6.5.1
     # via snakeviz
