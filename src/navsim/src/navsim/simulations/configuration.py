@@ -2,7 +2,11 @@ import datetime as dt
 import pathlib as pl
 from dataclasses import dataclass
 
-import tomllib as tl
+try:
+    import tomllib as tl
+except ImportError:
+    import tomli as tl
+
 from navtools.io import select_file
 from zoneinfo import ZoneInfo
 
