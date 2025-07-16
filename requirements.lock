@@ -10,11 +10,12 @@
 #   universal: false
 
 -e file:.
+-e file:src/navgnss
 -e file:src/navsim
 -e file:src/navtools
-aspn23 @ git+ssh://git@git.aspn.us/pntos/firehose-outputs.git@d425e26330e62371038f14ad12a8d8b4374698a6#subdirectory=aspn-py
+aspn23 @ git+https://github.com/tannerkoza/aspn-python.git@ebf49a65c4670c979bf27b82c18a9413f50aa1f9#subdirectory=aspn-py
     # via navtools
-aspn23-lcm @ git+ssh://git@git.aspn.us/pntos/firehose-outputs.git@50b596d2c349ceb98b60ab6aecc91961424bcec8#subdirectory=lcm/python
+aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git@ebf49a65c4670c979bf27b82c18a9413f50aa1f9#subdirectory=aspn-lcm
     # via navtools
 astropy==7.1.0
     # via navsim
@@ -37,19 +38,30 @@ numpy==2.0.1
     # via astropy
     # via numba
     # via pyerfa
+    # via scipy
 packaging==25.0
     # via astropy
+prompt-toolkit==3.0.51
+    # via navsim
+    # via navtools
 pyerfa==2.0.1.5
     # via astropy
 pyyaml==6.0.2
     # via astropy
 requests==2.32.4
     # via navtools
+scipy==1.16.0
+    # via navsim
 sgp4==2.24
     # via navsim
 tqdm==4.67.1
+    # via navsim
+types-requests==2.32.4.20250611
     # via navtools
 unlzw3==0.2.3
     # via navtools
 urllib3==2.5.0
     # via requests
+    # via types-requests
+wcwidth==0.2.13
+    # via prompt-toolkit

@@ -21,16 +21,18 @@ dev-dependencies = [
     "mypy>=1.11.1",
     "pytest-cov>=5.0.0",
     "snakeviz>=2.2.2",
+    "matplotlib>=3.10.3",
+    "pyqt6>=6.9.1",
 ]
 
 [tool.rye.workspace]
-members = ["src/navtools", "src/navsim"]
+members = ["src/navtools", "src/navsim", "src/navgnss"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/navtools","src/navsim"]
+packages = ["src/navtools","src/navsim", "src/navgnss"]
 
 [[tool.mypy.overrides]]
 module = "numba"
