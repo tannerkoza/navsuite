@@ -23,4 +23,4 @@ def datetime_to_gps(datetime: dt.datetime):
     if np.isscalar(datetime):
         return gps_week[0], gps_tow[0]
     else:
-        return gps_week, gps_tow
+        return gps_seconds, gps_week, gps_tow
