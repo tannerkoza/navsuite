@@ -5,7 +5,6 @@ from navtools.conversions import enu2geodetic, geodetic2ecef, geodetic2enu
 from navtools.conversions.coordinates import ECEF, GEODETIC
 from numpy.typing import ArrayLike
 from scipy.interpolate import CubicSpline, PchipInterpolator
-from scipy.signal import butter, sosfiltfilt
 
 from navsim.io import PROJECT_PATH
 

@@ -1,14 +1,15 @@
 import datetime as dt
-from collections import defaultdict
 from dataclasses import dataclass
 
 import numpy as np
-from astropy.time import Time, TimeGPS
+from astropy.time import Time
 from navtools.constants import SECONDS_PER_WEEK
-from navtools.conversions import datetime_to_gps
 from navtools.io import FileDownloader, decompress
+from navtools.io.parse import parse_tle, parse_sp3
 from sgp4.api import Satrec, SatrecArray
 from zoneinfo import ZoneInfo
+from itertools import compress
+from scipy.interpolate import PchipInterpolator
 
 from navsim.conversions import teme2itrf
 
@@ -80,20 +81,26 @@ class SatelliteEmitters:
     def process(
         self,
         utc_timestamps: dt.datetime | list[dt.datetime],
-        min_latitude: float | None = None,
-    ):
+        min_inclination: float | None = None,
+    ) -> dict:
+        # convert to astropy Time
         utc_timestamps = Time(utc_timestamps)
 
+        # test to see in new_time is same as established initial_time
         new_time = utc_timestamps[0] if utc_timestamps.shape else utc_timestamps
         self._initialze_time(new_time=new_time)
 
+        # process each constellation based on ephemeris format
+        emitters = {}
         if self._tle_constellations:
-            emitters = self._process_tle(
-                utc_time=utc_timestamps, min_latitude=min_latitude
+            tle_emitters = self._process_tle(
+                utc_time=utc_timestamps, min_inclination=min_inclination
             )
+            emitters.update(tle_emitters)
 
         if self._sp3_constellations:
-            emitters = self._process_sp3(utc_time=utc_timestamps)
+            sp3_emitters = self._process_sp3(utc_time=utc_timestamps)
+            emitters.update(sp3_emitters)
 
         return emitters
 
@@ -101,10 +108,16 @@ class SatelliteEmitters:
         if isinstance(emitter_id, str):
             emitter_id = [emitter_id]
 
-        valid_id_mask = np.logical_not(np.isin(self._tle_emitter_ids, emitter_id))
-        self._tle_emitter_ids = self._tle_emitter_ids[valid_id_mask]
-        self._tle_lines = self._tle_lines[valid_id_mask]
+        # tle removal
+        valid_tle_mask = np.logical_not(np.isin(self._tle_ids, emitter_id))
+        self._tle_ids = self._tle_ids[valid_tle_mask]
+        self._tle_lines = self._tle_lines[valid_tle_mask]
         self._build_tle_array()
+
+        # sp3 removal
+        valid_sp3_mask = np.logical_not(np.isin(self._sp3_ids, emitter_id))
+        self._sp3_ids = self._sp3_ids[valid_sp3_mask]
+        self._sp3_states = list(compress(self._sp3_states, valid_sp3_mask.tolist()))
 
     def _initialze_time(self, new_time: Time):
         if self._initial_time != new_time:
@@ -115,9 +128,9 @@ class SatelliteEmitters:
             msg = f"the initial time needs to be after {SatelliteEmitters.FIRST_DATETIME.isoformat()}."
             raise ValueError(msg)
 
-    def _process_tle(self, utc_time: list[Time], min_latitude: float | None):
+    def _process_tle(self, utc_time: list[Time], min_inclination: float | None):
         if self._tle_lines is None:
-            self._download_tle_files(min_latitude=min_latitude)
+            self._download_tle_files(min_inclination=min_inclination)
             self._build_tle_array()
 
         jd1 = np.atleast_1d(utc_time.jd1)
@@ -132,12 +145,12 @@ class SatelliteEmitters:
             teme_pos,
             teme_vel,
         )
-        ecef_pos *= 1000
-        ecef_vel *= 1000
+        ecef_pos *= 1000  # [m]
+        ecef_vel *= 1000  # [m/s]
 
         emitters = {
             emitter_id: (pos, vel)
-            for emitter_id, pos, vel in zip(self._tle_emitter_ids, ecef_pos, ecef_vel)
+            for emitter_id, pos, vel in zip(self._tle_ids, ecef_pos, ecef_vel)
         }
 
         return emitters
@@ -151,29 +164,74 @@ class SatelliteEmitters:
         if self._sp3_states is None:
             self._download_sp3_files()
 
-        jd1 = np.atleast_1d(utc_time.jd1)
-        jd2 = np.atleast_1d(utc_time.jd2)
-        error_codes, teme_pos, teme_vel = self._tle_array.sgp4(jd1, jd2)
+        emitters = {}
+        for emitter_id, states in zip(self._sp3_ids, self._sp3_states):
+            time = states[0]
+            xyz_clk = states[1]
 
-        if np.any(error_codes != 0):
-            raise RuntimeError(f"SGP4 errors encountered: {set(error_codes)}")
+            pchip = PchipInterpolator(x=time, y=xyz_clk)
+            new_xyz_clk = pchip(utc_time.gps)
+            new_dxyz_clk = pchip(utc_time.gps, 1)
 
-        ecef_pos, ecef_vel = teme2itrf(
-            utc_time,
-            teme_pos,
-            teme_vel,
-        )
-        ecef_pos *= 1000
-        ecef_vel *= 1000
-
-        emitters = {
-            emitter_id: (pos, vel)
-            for emitter_id, pos, vel in zip(self._tle_emitter_ids, ecef_pos, ecef_vel)
-        }
+            emitters[emitter_id] = (
+                new_xyz_clk[:, :3],
+                new_dxyz_clk[:, :3],
+            )  # TODO: add ability to return clock states
 
         return emitters
 
-    def _download_tle_files(self, min_latitude: float | None):
+    def _download_tle_files(self, min_inclination: float | None):
+        # download tles
+        urls = self._build_tle_urls()
+        files = [self._downloader.download(url) for url in urls]
+
+        # parse tles and append entries
+        tle_entries = {}
+        for file in files:
+            file_entries = parse_tle(file_path=file, min_inclination=min_inclination)
+            tle_entries.update(file_entries)
+
+        self._tle_ids = np.array(list(tle_entries.keys()))
+        self._tle_lines = np.array(list(tle_entries.values()))
+
+    def _download_sp3_files(self):
+        # download sp3s
+        urls = self._build_sp3_urls()
+        files = [self._downloader.download(url) for url in urls]
+
+        valid_sp3_ids = [
+            SatelliteEmitters.SUPPORTED_CONSTELLATIONS[c].eph_name
+            for c in self._sp3_constellations
+        ]
+
+        sp3_entries = {}
+        file_entries = [
+            parse_sp3(file_path=file, valid_constellations=valid_sp3_ids)
+            for file in files
+        ]
+
+        # find common prns across all file entries (should have common, but just checking)
+        common_prns = set.intersection(*[set(entry.keys()) for entry in file_entries])
+        for prn in common_prns:
+            # concatenate arbitrary # of arrays for # of files
+            data_by_idx = zip(*[entry[prn] for entry in file_entries])
+            entry = [np.concatenate(data) for data in data_by_idx]
+
+            time = entry[0]
+            states = entry[1]
+
+            # find unique timestamps
+            time, unique_idx = np.unique(time, return_index=True)
+            states = states[unique_idx]
+
+            # sort data by time
+            sorted_idx = time.argsort()
+            sp3_entries[prn] = [time[sorted_idx], states[sorted_idx]]
+
+        self._sp3_ids = np.array(list(sp3_entries.keys()))
+        self._sp3_states = list(sp3_entries.values())  # possibly non-homogenous
+
+    def _build_tle_urls(self):
         initial_time = self._initial_time.datetime.timetuple()
         year = initial_time.tm_year
         day = "%03d" % initial_time.tm_yday
@@ -182,90 +240,19 @@ class SatelliteEmitters:
             f"https://raw.githubusercontent.com/tannerkoza/celestrak-orbital-data/main/{constellation.url_name}/{year}/{day}/{constellation.url_name}.tle"
             for constellation in self._tle_constellations.values()
         ]
-        files = [self._downloader.download(url) for url in urls]
 
-        tle_emitter_ids = []
-        tle_lines = []
+        return urls
 
-        for file in files:
-            with open(file, "r") as f:
-                lines = f.readlines()
-
-                for sv_idx in range(0, len(lines), 3):
-                    line1 = lines[sv_idx + 1]
-                    line2 = lines[sv_idx + 2]
-
-                    if min_latitude is not None:
-                        fields = line2.split()
-                        inclination = float(fields[2])
-
-                        if inclination < np.abs(min_latitude):
-                            continue
-
-                    tle_emitter_ids.append(lines[sv_idx].strip())
-                    tle_lines.append(
-                        [
-                            line1,
-                            line2,
-                        ]
-                    )
-
-        self._tle_emitter_ids = np.array(tle_emitter_ids)
-        self._tle_lines = np.array(tle_lines)
-
-    def _download_sp3_files(self):
-        urls = self._build_sp3_url()
-        files = [self._downloader.download(url) for url in urls]
-
-        eph_names = {
-            SatelliteEmitters.SUPPORTED_CONSTELLATIONS[c].eph_name: c
-            for c in self._sp3_constellations
-        }
-
-        states = defaultdict(list)
-
-        for file in files:
-            with open(file, "r") as f:
-                lines = f.readlines()
-
-            current_time = None
-            for line in lines:
-                if line.startswith("*"):
-                    parts = line.split()
-                    current_time = dt.datetime(
-                        int(parts[1]),
-                        int(parts[2]),
-                        int(parts[3]),
-                        int(parts[4]),
-                        int(parts[5]),
-                        int(float(parts[6])),
-                        tzinfo=dt.timezone.utc,
-                    )
-                    gps_week, gps_tow = datetime_to_gps(datetime=current_time)
-                    gps_time = Time(gps_week, gps_tow, format="gps")
-
-                elif line.startswith("P") and current_time:
-                    prn = line[1:4]
-
-                    if prn[0] in eph_names:
-                        x = float(line[4:18]) * 1e3
-                        y = float(line[18:32]) * 1e3
-                        z = float(line[32:46]) * 1e3
-                        clk = float(line[46:60]) * 1e-6
-                        states[prn].append((gps_time, [x, y, z, clk]))
-
-        self._sp3_emitter_ids = np.array(list(states.keys()))
-        self._sp3_states = list(states.values())
-
-    def _build_sp3_url(self):
+    def _build_sp3_urls(self):
         MAX_FINAL_DELAY = dt.timedelta(days=12)
         MAX_RAPID_DELAY = dt.timedelta(hours=26)
 
         initial_datetime = self._initial_time.datetime
         times = [
             initial_datetime - dt.timedelta(days=1),
+            initial_datetime,
             initial_datetime + dt.timedelta(days=1),
-        ]
+        ]  # straddle true date to end-to-end interpolation
 
         urls = []
         for time in times:
@@ -282,10 +269,10 @@ class SatelliteEmitters:
             initial_time_utc = self._initial_time.datetime.astimezone(ZoneInfo("UTC"))
             difference = now - initial_time_utc
 
+            # check if BeiDou and QZSS are possible with selected initial_datetime
             has_beidou_or_qzss = any(
                 c in self._sp3_constellations for c in ["beidou", "qzss"]
             )
-
             if has_beidou_or_qzss and difference <= MAX_FINAL_DELAY:
                 cutoff_date = (now - MAX_FINAL_DELAY).isoformat()
                 raise ValueError(
@@ -293,6 +280,7 @@ class SatelliteEmitters:
                     f"Remove these constellations or change the date to {cutoff_date} or before."
                 )
 
+            # select final, rapid, or ultra rapid product url based on selected initial_datetime
             if difference > MAX_FINAL_DELAY:
                 file_name = f"ESA0MGNFIN_{year}{day}0000_01D_05M_ORB.SP3"
             elif difference > MAX_RAPID_DELAY:
