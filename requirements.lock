@@ -17,9 +17,9 @@ aspn23 @ git+https://github.com/tannerkoza/aspn-python.git@ebf49a65c4670c979bf27
     # via navtools
 aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git@ebf49a65c4670c979bf27b82c18a9413f50aa1f9#subdirectory=aspn-lcm
     # via navtools
-astropy==7.1.0
+astropy==6.1.7
     # via navsim
-astropy-iers-data==0.2025.7.7.0.39.39
+astropy-iers-data==0.2025.7.14.0.40.29
     # via astropy
 certifi==2025.6.15
     # via requests
@@ -50,7 +50,7 @@ pyyaml==6.0.2
     # via astropy
 requests==2.32.4
     # via navtools
-scipy==1.16.0
+scipy==1.15.3
     # via navsim
 sgp4==2.24
     # via navsim
