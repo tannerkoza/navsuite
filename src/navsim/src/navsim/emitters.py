@@ -1,15 +1,15 @@
 import datetime as dt
 from dataclasses import dataclass
+from itertools import compress
 
 import numpy as np
 from astropy.time import Time
 from navtools.constants import SECONDS_PER_WEEK
 from navtools.io import FileDownloader, decompress
-from navtools.io.parse import parse_tle, parse_sp3
+from navtools.io.parse import parse_sp3, parse_tle
+from scipy.interpolate import PchipInterpolator
 from sgp4.api import Satrec, SatrecArray
 from zoneinfo import ZoneInfo
-from itertools import compress
-from scipy.interpolate import PchipInterpolator
 
 from navsim.conversions import teme2itrf
 

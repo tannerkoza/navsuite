@@ -1,7 +1,8 @@
-import numpy as np
-import pathlib as pl
 import datetime as dt
+import pathlib as pl
 from collections import defaultdict
+
+import numpy as np
 
 from navtools.conversions import datetime_to_gps
 
