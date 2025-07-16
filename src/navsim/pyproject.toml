@@ -6,6 +6,7 @@ authors = [
     { name = "Tanner Koza", email = "kozatanner@gmail.com" }
 ]
 dependencies = [
+    "navtools==0.1.0",
     "sgp4>=2.24",
     "prompt-toolkit>=3.0.51",
     "tqdm>=4.67.1",
