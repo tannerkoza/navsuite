@@ -2,10 +2,19 @@
 
 from __future__ import annotations
 
+import datetime as dt
 from dataclasses import dataclass
 from math import sqrt
 
 from navtools.types import Datum
+
+# time
+"""a collection of time constants"""
+SECONDS_PER_HOUR = 3600.0
+SECONDS_PER_DAY = SECONDS_PER_HOUR * 24
+SECONDS_PER_WEEK = SECONDS_PER_DAY * 7
+SECONDS_PER_YEAR = SECONDS_PER_WEEK * 52
+GPS_EPOCH = dt.datetime(1980, 1, 6, tzinfo=dt.timezone.utc)
 
 # physical
 """a collection of physical constants used across physics in general
