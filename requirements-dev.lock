@@ -13,6 +13,8 @@
 -e file:src/navgnss
 -e file:src/navsim
 -e file:src/navtools
+    # via navgnss
+    # via navsim
 aspn23 @ git+https://github.com/tannerkoza/aspn-python.git@ebf49a65c4670c979bf27b82c18a9413f50aa1f9#subdirectory=aspn-py
     # via navtools
 aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git@ebf49a65c4670c979bf27b82c18a9413f50aa1f9#subdirectory=aspn-lcm
