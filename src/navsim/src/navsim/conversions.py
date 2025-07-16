@@ -1,9 +1,8 @@
 import erfa
 import numpy as np
-
-from astropy.time import Time, TimeDelta
 from astropy import units as u
 from astropy.coordinates.builtin_frames.utils import get_polar_motion
+from astropy.time import Time, TimeDelta
 
 
 def teme2itrf(time, teme_pos, teme_vel):

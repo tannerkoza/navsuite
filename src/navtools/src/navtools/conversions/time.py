@@ -1,6 +1,8 @@
-import numpy as np
 import datetime as dt
-from navtools.constants import SECONDS_PER_WEEK, GPS_EPOCH
+
+import numpy as np
+
+from navtools.constants import GPS_EPOCH, SECONDS_PER_WEEK
 
 
 def datetime_to_gps(datetime: dt.datetime):

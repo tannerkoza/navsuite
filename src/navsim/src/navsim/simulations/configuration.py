@@ -1,11 +1,10 @@
-import tomllib as tl
-import pathlib as pl
 import datetime as dt
+import pathlib as pl
 from dataclasses import dataclass
 
-from zoneinfo import ZoneInfo
-
+import tomllib as tl
 from navtools.io import select_file
+from zoneinfo import ZoneInfo
 
 
 @dataclass

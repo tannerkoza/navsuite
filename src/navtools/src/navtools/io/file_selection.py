@@ -1,18 +1,18 @@
 __all__ = ["select_file"]
 
+import html
 import os
 import pathlib as pl
+from datetime import datetime
+
 from prompt_toolkit.application import Application
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout import Layout, HSplit, VSplit, Dimension, Window
-from prompt_toolkit.widgets import Frame
-from prompt_toolkit.layout.controls import FormattedTextControl
-from prompt_toolkit.layout.containers import DynamicContainer
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.formatted_text import HTML
-from datetime import datetime
-import html
-
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.layout import Dimension, HSplit, Layout, VSplit, Window
+from prompt_toolkit.layout.containers import DynamicContainer
+from prompt_toolkit.layout.controls import FormattedTextControl
+from prompt_toolkit.widgets import Frame
 
 PROJECT_PATH = pl.Path(__file__).parents[2]
 CONFIG_PATH = PROJECT_PATH / "config"

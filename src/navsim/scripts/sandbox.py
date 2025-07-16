@@ -1,17 +1,15 @@
-import numpy as np
-
 import datetime as dt
 
-
+import numpy as np
 from navsim.io import CONFIG_PATH
 from navsim.simulations import (
-    load_configuration,
     MeasurementSimulation,
+    load_configuration,
 )
 from navsim.trajectories import (
+    interpolate_trajectory,
     load_sample_trajectory,
     translate_trajectory,
-    interpolate_trajectory,
 )
 
 

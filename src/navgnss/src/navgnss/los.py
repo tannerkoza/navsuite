@@ -1,7 +1,6 @@
 import numpy as np
-
+from navtools.conversions import ecef2enu, ecef2geodetic
 from navtools.utils import to_cartesian_series
-from navtools.conversions import ecef2geodetic, ecef2enu
 
 
 def compute_visibility(

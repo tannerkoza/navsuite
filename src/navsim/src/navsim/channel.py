@@ -1,5 +1,4 @@
 import numpy as np
-
 from navtools.constants import SPEED_OF_LIGHT
 from navtools.conversions import ecef2geodetic
 
