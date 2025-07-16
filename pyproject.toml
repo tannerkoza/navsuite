@@ -13,23 +13,22 @@ requires-python = ">= 3.10"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
-managed = true
-dev-dependencies = [
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/navtools","src/navsim"]
+
+[dependency-groups]
+dev = [
     "pre-commit>=3.8.0",
     "pytest>=8.3.2",
     "mypy>=1.11.1",
     "pytest-cov>=5.0.0",
 ]
 
-[tool.rye.workspace]
+[tool.uv.workspace]
 members = ["src/navtools", "src/navsim"]
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/navtools","src/navsim"]
 
 [[tool.mypy.overrides]]
 module = "numba"
