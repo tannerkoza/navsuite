@@ -5,7 +5,11 @@ description = ""
 authors = [
     { name = "Tanner Koza", email = "kozatanner@gmail.com" }
 ]
-dependencies = []
+dependencies = [
+    "navgnss",
+    "navsim",
+    "navtools",
+]
 readme = "README.md"
 requires-python = ">= 3.10"
 
@@ -19,6 +23,14 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["src/navtools","src/navsim", "src/navgnss"]
 
+[tool.uv.workspace]
+members = ["src/navtools", "src/navsim", "src/navgnss"]
+
+[tool.uv.sources]
+navtools = { workspace = true }
+navsim = { workspace = true }
+navgnss = { workspace = true }
+
 [dependency-groups]
 dev = [
     "pre-commit>=3.8.0",
@@ -29,9 +41,6 @@ dev = [
     "matplotlib>=3.10.3",
     "pyqt6>=6.9.1",
 ]
-
-[tool.uv.workspace]
-members = ["src/navtools", "src/navsim"]
 
 [[tool.mypy.overrides]]
 module = "numba"
