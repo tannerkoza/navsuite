@@ -18,3 +18,4 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/navgnss"]
+
