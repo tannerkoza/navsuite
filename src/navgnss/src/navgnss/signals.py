@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from aspn23_lcm import type_satnav_satellite_system, type_satnav_signal_descriptor
 from typing import List, Union
 
+from aspn23_lcm import type_satnav_satellite_system, type_satnav_signal_descriptor
 
 SIGNAL_DESCRIPTORS = {
     value: name.replace("SIGNAL_DESCRIPTOR_", "")

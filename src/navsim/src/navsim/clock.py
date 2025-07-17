@@ -1,6 +1,6 @@
-import numpy as np
 from dataclasses import dataclass
 
+import numpy as np
 from navtools.constants import SPEED_OF_LIGHT
 
 
@@ -18,8 +18,13 @@ HIGH_QUALITY_TCXO = NavigationClock(h0=2e-21, h1=1e-22, h2=2e-20)
 OCXO = NavigationClock(h0=2e-25, h1=7e-25, h2=6e-25)
 RUBIDIUM = NavigationClock(h0=2e-22, h1=4.5e-26, h2=1e-30)
 CESIUM = NavigationClock(h0=2e-22, h1=5e-27, h2=1.5e-33)
-NAVIGATION_CLOCKS = {"low_quality_tcxo": LOW_QUALITY_TCXO, "high_quality_tcxo": HIGH_QUALITY_TCXO, "ocxo":OCXO, "rubidium": RUBIDIUM, "cesium": CESIUM}
-
+NAVIGATION_CLOCKS = {
+    "low_quality_tcxo": LOW_QUALITY_TCXO,
+    "high_quality_tcxo": HIGH_QUALITY_TCXO,
+    "ocxo": OCXO,
+    "rubidium": RUBIDIUM,
+    "cesium": CESIUM,
+}
 
 
 def compute_clock_states(

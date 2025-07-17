@@ -1,6 +1,6 @@
 import datetime as dt
 import pathlib as pl
-from dataclasses import dataclass, fields, MISSING
+from dataclasses import MISSING, dataclass, fields
 
 try:
     import tomllib as tl
@@ -104,7 +104,7 @@ def _preprocess_config(config: dict):
     return new_config
 
 
-from typing import Dict, Any, Type, TypeVar
+from typing import Any, Dict, Type, TypeVar
 
 T = TypeVar("T")
 

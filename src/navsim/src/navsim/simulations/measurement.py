@@ -1,19 +1,19 @@
 import datetime as dt
+from collections import defaultdict
 
 import numpy as np
 from astropy.time import Time
 from navgnss.los import compute_range_and_uv, compute_range_rate, compute_visibility
 from navgnss.signals import SATELLITE_SIGNALS
 from navtools.constants import EARTH_RATE, SPEED_OF_LIGHT
-from navtools.conversions import ecef2geodetic, datetime2gps
-from navsim.channel import compute_klobuchar_delay, compute_saastamoinen_delay
-from navsim.clock import compute_clock_states, NAVIGATION_CLOCKS
-from navsim.simulations import MeasurementConfiguration
+from navtools.conversions import datetime2gps, ecef2geodetic
 from numpy.typing import ArrayLike
-from collections import defaultdict
 from tqdm import tqdm
 
+from navsim.channel import compute_klobuchar_delay, compute_saastamoinen_delay
+from navsim.clock import NAVIGATION_CLOCKS, compute_clock_states
 from navsim.emitters import SatelliteEmitters
+from navsim.simulations import MeasurementConfiguration
 
 
 class MeasurementSimulation:
@@ -55,7 +55,6 @@ class MeasurementSimulation:
     def _process(self):
         niterations = len(self._datetimes)
         with tqdm(total=niterations) as progress_bar:
-
             observables = defaultdict(list)
             emitter_data = defaultdict(list)
 
