@@ -14,22 +14,18 @@ from navsim.trajectories import (
 
 
 def main():
-    config = load_configuration(dir=CONFIG_PATH, sim_type="measurement")
-
-    # extract configuration lists
-    constellations = [c.reference_constellation for c in config.constellations]
-    mask_angles = [c.mask_angle for c in config.constellations]
+    config = load_configuration(dir=CONFIG_PATH)
 
     # create elapsed timeseries and timestamps
     sim_timeseries, sim_timestamps = generate_timeseries(
-        initial_time=config.initial_datetime,  # config.initial_datetime is UTC referenced
-        duration=config.duration,
-        fsim=config.fsim,
+        initial_time=config.general.initial_datetime,  # config.initial_datetime is UTC referenced
+        duration=config.general.duration,
+        fsim=config.general.fsim,
     )
 
     # load and modify trajectory
     traj_timeseries, traj_lat, traj_lon, traj_alt = load_sample_trajectory(
-        trajectory_name=config.trajectory_name
+        trajectory_name=config.general.trajectory_name
     )
     rx_pos, rx_vel = interpolate_trajectory(
         time=traj_timeseries,
@@ -43,8 +39,12 @@ def main():
     rx_vel = np.array(rx_vel).transpose()
 
     # create simulation and begin
-    sim = MeasurementSimulation(constellations=constellations, mask_angles=mask_angles)
-    sim.simulate(utc_timestamps=sim_timestamps, rx_pos=rx_pos, rx_vel=rx_vel)
+    sim = MeasurementSimulation(config=config.measurement)
+    obs, sv_data = sim.simulate(
+        utc_timestamps=sim_timestamps, rx_pos=rx_pos, rx_vel=rx_vel
+    )
+
+    print(f"# SVs: {len(list(sv_data))}")
 
     pass
 

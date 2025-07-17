@@ -1,6 +1,6 @@
 import datetime as dt
 import pathlib as pl
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, MISSING
 
 try:
     import tomllib as tl
@@ -14,22 +14,34 @@ from zoneinfo import ZoneInfo
 @dataclass
 class Constellation:
     reference_constellation: str
-    signals: str | list[str]
+    signals: list[str]
     mask_angle: float  # [deg]
+    sv_clock_type: str | None = None
 
 
 @dataclass
 class MeasurementConfiguration:
+    constellation: list[Constellation]
+    rx_clock_type: str
+    ionosphere: bool
+    troposphere: bool
+
+
+@dataclass
+class GeneralConfiguration:
     initial_datetime: dt.datetime
     duration: float
     fsim: float
-
     trajectory_name: str
 
-    constellations: list[Constellation]
+
+@dataclass
+class NavsimConfiguration:
+    general: GeneralConfiguration
+    measurement: MeasurementConfiguration
 
 
-def load_configuration(dir: str | pl.Path, sim_type: str):
+def load_configuration(dir: str | pl.Path):
     """
     Load and preprocess a simulation configuration file based on simulation type.
 
@@ -62,33 +74,57 @@ def load_configuration(dir: str | pl.Path, sim_type: str):
     with open(selected_config, "rb") as config_file:
         config = tl.load(config_file)
 
-        match sim_type.casefold():
-            case "measurement":
-                preprocessed_config = _preprocess_measurement_config(config=config)
-                loaded_config = MeasurementConfiguration(**preprocessed_config)
-
-            case "correlator":  # TODO: implement correlator simulation preprocessing
-                pass
-
-            case "signal":  # TODO: implement signal simulation preprocessing
-                pass
+        preprocessed_config = _preprocess_config(config=config)
+        loaded_config = _dict_to_dataclass(
+            cls=NavsimConfiguration, data=preprocessed_config
+        )
 
         return loaded_config
 
 
-def _preprocess_measurement_config(config: dict):
-    initial_datetime = config.pop("initial_datetime")
-    constellations = config.pop("constellation")
+def _preprocess_config(config: dict):
+    new_config = {}
 
-    # casefold configuration keys if need be
-    new_config = {key.casefold(): value for key, value in config.items()}
+    # general
+    general = _dict_to_dataclass(cls=GeneralConfiguration, data=config)
 
-    if not initial_datetime.tzinfo == dt.timezone.utc:
-        initial_datetime = initial_datetime.astimezone(ZoneInfo("UTC"))
+    if not general.initial_datetime.tzinfo == dt.timezone.utc:
+        general.initial_datetime = general.initial_datetime.astimezone(ZoneInfo("UTC"))
 
-    new_config["initial_datetime"] = initial_datetime
-    new_config["constellations"] = [
-        Constellation(**constellation) for constellation in constellations
+    new_config["general"] = general
+
+    # measurement
+    measurement = _dict_to_dataclass(cls=MeasurementConfiguration, data=config)
+    measurement.constellation = [
+        _dict_to_dataclass(cls=Constellation, data=constellation)
+        for constellation in measurement.constellation
     ]
+    new_config["measurement"] = measurement
 
     return new_config
+
+
+from typing import Dict, Any, Type, TypeVar
+
+T = TypeVar("T")
+
+
+def _dict_to_dataclass(cls: Type[T], data: Dict[str, Any]) -> T:
+    """Convert dict to dataclass with error handling"""
+    class_fields = {f.name: f for f in fields(cls)}
+
+    # Check for missing required fields
+    required_fields = {
+        name
+        for name, field in class_fields.items()
+        if field.default is field.default_factory is MISSING
+    }
+
+    missing_fields = required_fields - set(data.keys())
+    if missing_fields:
+        raise ValueError(f"Missing required fields: {missing_fields}")
+
+    # Filter to only valid fields
+    filtered_data = {k: v for k, v in data.items() if k in class_fields}
+
+    return cls(**filtered_data)
