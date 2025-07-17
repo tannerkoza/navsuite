@@ -5,7 +5,7 @@ import numpy as np
 from navtools.constants import GPS_EPOCH, SECONDS_PER_WEEK
 
 
-def datetime_to_gps(datetime: dt.datetime):
+def datetime2gps(datetime: dt.datetime):
     datetime = np.atleast_1d(datetime)
 
     # Ensure all datetimes are timezone-aware (assume UTC if naive)

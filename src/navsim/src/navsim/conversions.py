@@ -6,9 +6,14 @@ from astropy.time import Time, TimeDelta
 
 
 def teme2itrf(time, teme_pos, teme_vel):
+    # def smart_mmult(C, X):
+    #     # C: (T, 3, 3), X: (N, T, 3)
+    #     return np.einsum("tij,ntj->nti", C, X, optimize=True)
+
     def smart_mmult(C, X):
-        # C: (T, 3, 3), X: (N, T, 3)
-        return np.einsum("tij,ntj->nti", C, X)
+        C2 = C[None]  # (1, T, 3, 3)
+        X2 = X[..., :, None]  # (N, T, 3, 1)
+        return np.matmul(C2, X2)[..., 0]  # (N, T, 3)
 
     dt = 1.0
     half_dt = dt / 2
@@ -37,7 +42,7 @@ def C_teme2itrf(time: Time | list[Time]):
     time = time if time.shape else [time]
 
     # Assume get_polar_motion can handle vector input — otherwise vectorize/memoize it
-    xp, yp = np.transpose([get_polar_motion(t) for t in time])
+    xp, yp = get_polar_motion(time)
 
     # ERFA: gst from UT1
     gst = erfa.gmst82(jd1, jd2)

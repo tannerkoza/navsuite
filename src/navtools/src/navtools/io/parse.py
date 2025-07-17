@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from navtools.conversions import datetime_to_gps
+from navtools.conversions import datetime2gps
 
 
 def parse_tle(file_path: str | pl.Path, min_inclination: float | None = None):
@@ -57,7 +57,7 @@ def parse_sp3(file_path: str | pl.Path, valid_constellations: str | list[str]):
                     int(float(parts[6])),
                     tzinfo=dt.timezone.utc,
                 )
-                gps_seconds, _, _ = datetime_to_gps(datetime=current_time)
+                gps_seconds, _, _ = datetime2gps(datetime=current_time)
 
             elif line.startswith("P") and current_time:
                 prn = line[1:4]

@@ -7,8 +7,8 @@ authors = [
 ]
 dependencies = [
     "navtools @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navtools",
+    "navgnss @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navgnss",
     "sgp4>=2.24",
-    "prompt-toolkit>=3.0.51",
     "tqdm>=4.67.1",
     "astropy>=6.1.7",
     "scipy>=1.15.3",
@@ -27,5 +27,4 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["src/navsim"]
 
-[tool.uv.sources]
-navtools = { workspace = true }
+

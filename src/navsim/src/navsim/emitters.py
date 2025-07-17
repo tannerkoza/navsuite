@@ -72,7 +72,9 @@ class SatelliteEmitters:
             == "sp3"
         }
 
+        self._tle_ids = None
         self._tle_lines = None
+        self._sp3_ids = None
         self._sp3_states = None
 
         self._downloader = FileDownloader(disable_warning=disable_warnings)
@@ -109,15 +111,17 @@ class SatelliteEmitters:
             emitter_id = [emitter_id]
 
         # tle removal
-        valid_tle_mask = np.logical_not(np.isin(self._tle_ids, emitter_id))
-        self._tle_ids = self._tle_ids[valid_tle_mask]
-        self._tle_lines = self._tle_lines[valid_tle_mask]
-        self._build_tle_array()
+        if not self._tle_ids is None:
+            valid_tle_mask = np.logical_not(np.isin(self._tle_ids, emitter_id))
+            self._tle_ids = self._tle_ids[valid_tle_mask]
+            self._tle_lines = self._tle_lines[valid_tle_mask]
+            self._build_tle_array()
 
         # sp3 removal
-        valid_sp3_mask = np.logical_not(np.isin(self._sp3_ids, emitter_id))
-        self._sp3_ids = self._sp3_ids[valid_sp3_mask]
-        self._sp3_states = list(compress(self._sp3_states, valid_sp3_mask.tolist()))
+        if not self._sp3_ids is None:
+            valid_sp3_mask = np.logical_not(np.isin(self._sp3_ids, emitter_id))
+            self._sp3_ids = self._sp3_ids[valid_sp3_mask]
+            self._sp3_states = list(compress(self._sp3_states, valid_sp3_mask.tolist()))
 
     def _initialze_time(self, new_time: Time):
         if self._initial_time != new_time:
@@ -138,7 +142,13 @@ class SatelliteEmitters:
         error_codes, teme_pos, teme_vel = self._tle_array.sgp4(jd1, jd2)
 
         if np.any(error_codes != 0):
-            raise RuntimeError(f"SGP4 errors encountered: {set(error_codes)}")
+            remove_idx = np.any(error_codes != 0, axis=1)
+            valid_idx = np.logical_not(remove_idx)
+            teme_pos = teme_pos[valid_idx]
+            teme_vel = teme_vel[valid_idx]
+
+            invalid_emitters = self._tle_ids[remove_idx]
+            self.remove_emitters(emitter_id=invalid_emitters.tolist())
 
         ecef_pos, ecef_vel = teme2itrf(
             utc_time,
@@ -247,12 +257,36 @@ class SatelliteEmitters:
         MAX_FINAL_DELAY = dt.timedelta(days=12)
         MAX_RAPID_DELAY = dt.timedelta(hours=26)
 
-        initial_datetime = self._initial_time.datetime
+        # compute difference from now and initial sim time
+        initial_datetime = self._initial_time.datetime.replace(tzinfo=ZoneInfo("UTC"))
+        now = dt.datetime.now(tz=dt.timezone.utc)
+        difference = now - initial_datetime
+
+        if difference < dt.timedelta(days=1):
+            raise ValueError(
+                f"The selected time must be at least one day before current date ({now.isoformat()}) for GNSS."
+            )
+
+        # check if BeiDou and QZSS are possible with selected initial_datetime
+        has_beidou_or_qzss = any(
+            c in self._sp3_constellations for c in ["beidou", "qzss"]
+        )
+        if has_beidou_or_qzss and difference <= MAX_FINAL_DELAY:
+            cutoff_date = (now - MAX_FINAL_DELAY).isoformat()
+            raise ValueError(
+                f"BeiDou and QZSS are not supported for ESA rapid or ultra-rapid SP3 products.\n"
+                f"Remove these constellations or change the date to {cutoff_date} or before."
+            )
+
+        # select multiple days to interpolate across
         times = [
             initial_datetime - dt.timedelta(days=1),
             initial_datetime,
-            initial_datetime + dt.timedelta(days=1),
-        ]  # straddle true date to end-to-end interpolation
+        ]
+
+        # straddle true date to end-to-end interpolation
+        if difference > dt.timedelta(days=2):
+            times.append(initial_datetime + dt.timedelta(days=1))
 
         urls = []
         for time in times:
@@ -263,22 +297,6 @@ class SatelliteEmitters:
             gps_week = int(
                 np.floor(np.array(self._initial_time.gps) / SECONDS_PER_WEEK)
             )
-
-            # compute difference from now and initial sim time
-            now = dt.datetime.now(tz=dt.timezone.utc)
-            initial_time_utc = self._initial_time.datetime.astimezone(ZoneInfo("UTC"))
-            difference = now - initial_time_utc
-
-            # check if BeiDou and QZSS are possible with selected initial_datetime
-            has_beidou_or_qzss = any(
-                c in self._sp3_constellations for c in ["beidou", "qzss"]
-            )
-            if has_beidou_or_qzss and difference <= MAX_FINAL_DELAY:
-                cutoff_date = (now - MAX_FINAL_DELAY).isoformat()
-                raise ValueError(
-                    f"BeiDou and QZSS are not supported for ESA rapid or ultra-rapid SP3 products.\n"
-                    f"Remove these constellations or change the date to {cutoff_date} or before."
-                )
 
             # select final, rapid, or ultra rapid product url based on selected initial_datetime
             if difference > MAX_FINAL_DELAY:
