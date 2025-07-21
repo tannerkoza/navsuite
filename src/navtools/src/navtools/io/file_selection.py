@@ -527,6 +527,3 @@ if __name__ == "__main__":
         print(f"✅ Selected file: {result}")
     else:
         print("❌ No file selected")
-
-    # Or with default title
-    # result = select_file(".")
