@@ -1,24 +1,28 @@
-import pathlib as pl
-
 import numpy as np
 from navtools.conversions import enu2geodetic, geodetic2ecef, geodetic2enu
 from navtools.conversions.coordinates import ECEF, GEODETIC
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from scipy.interpolate import CubicSpline, PchipInterpolator
 
 from navsim.io import PROJECT_PATH
 
 
-def load_sample_trajectory(trajectory_name: str):
+def load_sample_trajectory(
+    trajectory_name: str,
+) -> tuple[
+    NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
+]:
+    # load sample trajectory file
     file_path = PROJECT_PATH / "trajectories" / trajectory_name
     data = np.loadtxt(fname=file_path.with_suffix(".csv"), delimiter=",", skiprows=1)
 
-    time = data[:, 3] - data[0, 3]
-    lat = data[:, 0]
-    lon = data[:, 1]
-    alt = data[:, 2]
+    # extract relevant data
+    timeseries = data[:, 3] - data[0, 3]  # [s]
+    lat = data[:, 0]  # [deg]
+    lon = data[:, 1]  # [deg]
+    alt = data[:, 2]  # [m]
 
-    return time, lat, lon, alt
+    return timeseries, lat, lon, alt
 
 
 def translate_trajectory(
@@ -48,18 +52,18 @@ def translate_trajectory(
 
 
 def interpolate_trajectory(
-    time: ArrayLike,
-    lat: ArrayLike,
-    lon: ArrayLike,
-    alt: ArrayLike,
-    new_time: ArrayLike,
-    include_accel=False,
+    time: ArrayLike[float],
+    lat: ArrayLike[float],
+    lon: ArrayLike[float],
+    alt: ArrayLike[float],
+    new_time: ArrayLike[float],
+    include_accel: bool = False,
     deg: bool = False,
-):
+) -> tuple[ECEF, ECEF] | tuple[ECEF, ECEF, ECEF]:
     ecef_pos = np.array(geodetic2ecef(lat=lat, lon=lon, alt=alt, deg=deg)).transpose()
 
     if include_accel:
-        cs = CubicSpline(x=time, y=ecef_pos)
+        cs = CubicSpline(x=time, y=ecef_pos, extrapolate=False)
         pos = cs(new_time).transpose()
         vel = cs(new_time, 1).transpose()
         accel = cs(new_time, 2).transpose()
@@ -71,7 +75,7 @@ def interpolate_trajectory(
         )
 
     else:
-        pchip = PchipInterpolator(x=time, y=ecef_pos)
+        pchip = PchipInterpolator(x=time, y=ecef_pos, extrapolate=False)
         pos = pchip(new_time).transpose()
         vel = pchip(new_time, 1).transpose()
 

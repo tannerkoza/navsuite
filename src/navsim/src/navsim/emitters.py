@@ -45,6 +45,15 @@ class SatelliteEmitters:
         "starlink": SupportedConstellation(
             eph_format="tle", eph_name="STARLINK", url_name="starlink"
         ),
+        "eutelsat": SupportedConstellation(
+            eph_format="tle", eph_name="EUTELSAT", url_name="eutelsat"
+        ),
+        "kuiper": SupportedConstellation(
+            eph_format="tle", eph_name="KUIPER", url_name="kuiper"
+        ),
+        "qianfan": SupportedConstellation(
+            eph_format="tle", eph_name="QIANFAN", url_name="qianfan"
+        ),
     }
 
     @property
@@ -78,7 +87,7 @@ class SatelliteEmitters:
         self._sp3_states = None
 
         self._downloader = FileDownloader(disable_warning=disable_warnings)
-        self._initial_time = []
+        self._initial_time: Time | list = []
 
     def process(
         self,
@@ -86,22 +95,22 @@ class SatelliteEmitters:
         min_inclination: float | None = None,
     ) -> dict:
         # convert to astropy Time
-        utc_timestamps = Time(utc_timestamps)
+        utc_ts = Time(utc_timestamps)
 
         # test to see in new_time is same as established initial_time
-        new_time = utc_timestamps[0] if utc_timestamps.shape else utc_timestamps
+        new_time = utc_ts[0] if utc_ts.shape else utc_ts
         self._initialze_time(new_time=new_time)
 
         # process each constellation based on ephemeris format
         emitters = {}
         if self._tle_constellations:
             tle_emitters = self._process_tle(
-                utc_time=utc_timestamps, min_inclination=min_inclination
+                utc_time=utc_ts, min_inclination=min_inclination
             )
             emitters.update(tle_emitters)
 
         if self._sp3_constellations:
-            sp3_emitters = self._process_sp3(utc_time=utc_timestamps)
+            sp3_emitters = self._process_sp3(utc_time=utc_ts)
             emitters.update(sp3_emitters)
 
         return emitters
@@ -132,7 +141,7 @@ class SatelliteEmitters:
             msg = f"the initial time needs to be after {SatelliteEmitters.FIRST_DATETIME.isoformat()}."
             raise ValueError(msg)
 
-    def _process_tle(self, utc_time: list[Time], min_inclination: float | None):
+    def _process_tle(self, utc_time: Time, min_inclination: float | None):
         if self._tle_lines is None:
             self._download_tle_files(min_inclination=min_inclination)
             self._build_tle_array()
@@ -193,7 +202,11 @@ class SatelliteEmitters:
     def _download_tle_files(self, min_inclination: float | None):
         # download tles
         urls = self._build_tle_urls()
-        files = [self._downloader.download(url) for url in urls]
+        files = self._downloader.download(
+            url=urls, progress_desc="Downloading TLE Ephemeris"
+        )
+
+        files = files if isinstance(files, list) else [files]
 
         # parse tles and append entries
         tle_entries = {}
@@ -207,7 +220,10 @@ class SatelliteEmitters:
     def _download_sp3_files(self):
         # download sp3s
         urls = self._build_sp3_urls()
-        files = [self._downloader.download(url) for url in urls]
+        files = self._downloader.download(
+            url=urls, progress_desc="Downloading SP3 Ephemeris"
+        )
+        files = files if isinstance(files, list) else [files]
 
         valid_sp3_ids = [
             SatelliteEmitters.SUPPORTED_CONSTELLATIONS[c].eph_name

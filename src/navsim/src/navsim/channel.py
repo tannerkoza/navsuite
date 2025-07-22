@@ -1,5 +1,5 @@
 import numpy as np
-from navtools.constants import SPEED_OF_LIGHT
+from navtools.constants import BOLTZMANN, SPEED_OF_LIGHT
 from navtools.conversions import ecef2geodetic
 from numpy.typing import ArrayLike
 
@@ -283,3 +283,24 @@ def compute_saastamoinen_delay(
 
     total_delay_m[valid_data] = dry_delay_m + wet_delay_m
     return total_delay_m
+
+
+def compute_carrier_to_noise(
+    range: float,
+    transmit_eirp: float,
+    fcarrier: float,
+    cn0_attenuation: float = 0,
+    temperature: float = 290,
+):
+    ADDITIONAL_NOISE_FIGURE = 3  # [dB-Hz] cascaded + band-limiting/quantization noise
+
+    wavelength = SPEED_OF_LIGHT / fcarrier  # [m]
+    FSPL = 20 * np.log10(4 * np.pi * range / wavelength)  # [dB] free space path loss
+
+    received_carrier_power = transmit_eirp - FSPL - cn0_attenuation  # [dBW]
+    thermal_noise_density = 10 * np.log10(BOLTZMANN * temperature)  # [dBW/Hz]
+
+    nominal_cn0 = received_carrier_power - thermal_noise_density  # [dB-Hz]
+    cn0 = nominal_cn0 - ADDITIONAL_NOISE_FIGURE
+
+    return cn0

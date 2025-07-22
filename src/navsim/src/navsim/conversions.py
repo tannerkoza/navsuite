@@ -35,7 +35,7 @@ def teme2itrf(time, teme_pos, teme_vel):
     return itrf_pos, itrf_vel
 
 
-def C_teme2itrf(time: Time | list[Time]):
+def C_teme2itrf(time: Time):
     jd1 = time.ut1.jd1
     jd2 = time.ut1.jd2
 
