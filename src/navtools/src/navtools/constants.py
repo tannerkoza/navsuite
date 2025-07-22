@@ -1,22 +1,51 @@
-"""constants.py contains constants and datums commonly used in navigation"""
-
 from __future__ import annotations
 
+import datetime as dt
 from dataclasses import dataclass
 from math import sqrt
+from typing import NamedTuple
 
-from navtools.types import Datum
+# time
+"""A collection of time constants."""
+SECONDS_PER_HOUR = 3600.0
+SECONDS_PER_DAY = SECONDS_PER_HOUR * 24
+SECONDS_PER_WEEK = SECONDS_PER_DAY * 7
+SECONDS_PER_YEAR = SECONDS_PER_WEEK * 52
+GPS_EPOCH = dt.datetime(1980, 1, 6, tzinfo=dt.timezone.utc)
 
 # physical
-"""a collection of physical constants used across physics in general
-"""
+"""A collection of physical constants used across physics in general."""
 SPEED_OF_LIGHT: float = 299792458.0  # [m/s]
 BOLTZMANN: float = 1.38e-23  # [J/K]
 GRAVITY: float = 9.80665  # acceleration due to gravity (Earth) [m/s^2]
 
+
 # global datums
-""" a collection of constants specific to global datums (e.g., WGS84, GRS80, etc.) 
-"""
+class Datum(NamedTuple):
+    """
+    Basic ellipsoid datum definition.
+
+    Attributes
+    ----------
+    name : str
+        Full name of the datum (e.g., "WGS-84 (1984)").
+    r0 : float
+        Equatorial radius (semi-major axis) in meters.
+    rp : float
+        Polar radius (semi-minor axis) in meters.
+
+    Examples
+    --------
+    >>> Datum(name="WGS84", r0=6378137.0, rp=6356752.31424518)
+    Datum(name='WGS84', r0=6378137.0, rp=6356752.31424518)
+    """
+
+    name: str
+    r0: float
+    rp: float
+
+
+"""A collection of constants specific to global datums (e.g., WGS84, GRS80)."""
 GEODETIC_DATUMS: dict[str, Datum] = {
     "grs80": Datum(name="GRS-80 (1979)", r0=6378137.0, rp=6356752.31414036),
     "wgs84": Datum(name="WGS-84 (1984)", r0=6378137.0, rp=6356752.31424518),
@@ -27,14 +56,36 @@ EARTH_RATE: float = 7.292115e-5  # WGS84 Earth rotation rate [rad/s]
 
 @dataclass
 class GeodeticDatum:
-    """a geodetic datum (ellipsoid) used for conversions, rotations, etc.
+    """
+    A geodetic ellipsoid datum model for coordinate conversions.
 
-    default datums:
-        wgs84: https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84
+    Default datums:
+      - wgs84: https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84
+      - grs80: https://en.wikipedia.org/wiki/GRS_80
+      - pz90.11: https://structure.mil.ru/files/pz-90.pdf
 
-        grs80: https://en.wikipedia.org/wiki/GRS_80
+    Attributes
+    ----------
+    model : str
+        Abbreviation of the datum ("wgs84", "grs80", etc.).
+    name : str
+        Full formal name of the datum.
+    r0 : float
+        Equatorial radius (m).
+    rp : float
+        Polar radius (m).
+    flattening : float
+        Flattening = (r0 - rp) / r0.
+    third_flattening : float
+        Third flattening = (r0 - rp) / (r0 + rp).
+    eccentricity : float
+        First eccentricity of the ellipsoid.
 
-        pz90.11: https://structure.mil.ru/files/pz-90.pdf
+    Examples
+    --------
+    >>> d = GeodeticDatum.from_datum("wgs84")
+    >>> round(d.flattening, 9)
+    0.003352813
     """
 
     model: str
@@ -52,20 +103,18 @@ class GeodeticDatum:
         name: str = "",
         model: str = "",
     ):
-        """a default or custom geodetic datum (ellipsoid) model
-
+        """
         Parameters
         ----------
         r0 : float
-            equatorial radius or semi-major axis
+            Equatorial radius (semi-major axis).
         rp : float
-            polar radius or semi-minor axis
+            Polar radius (semi-minor axis).
         name : str, optional
-            formal datum name, by default ""
+            Full official name of the datum.
         model : str, optional
-            short-hand datum name, by default ""
+            Abbreviated model identifier.
         """
-
         self.flattening = (r0 - rp) / r0
         assert self.flattening >= 0, "flattening must be >= 0"
         self.third_flattening = (r0 - rp) / (r0 + rp)
@@ -78,19 +127,25 @@ class GeodeticDatum:
 
     @classmethod
     def from_datum(cls, datum_name: str) -> GeodeticDatum:
-        """create GeodeticDatum instance from known datum name
+        """
+        Instantiate a GeodeticDatum from a predefined constant.
 
         Parameters
         ----------
         datum_name : str
-            name of the desired default GeodeticDatum
+            Key name in `GEODETIC_DATUMS` (e.g., "wgs84").
 
         Returns
         -------
         GeodeticDatum
-            desired default GeodeticDatum
-        """
+            Instance with appropriate ellipsoid parameters.
 
+        Examples
+        --------
+        >>> d = GeodeticDatum.from_datum("grs80")
+        >>> d.model, d.name
+        ('grs80', 'GRS-80 (1979)')
+        """
         return cls(
             r0=GEODETIC_DATUMS[datum_name].r0,
             rp=GEODETIC_DATUMS[datum_name].rp,

@@ -17,7 +17,7 @@
 ---
 
 <p align="center"> A collection of navigation-related Python packages.
-    <br> 
+    <br>
 </p>
 
 ## 📝 Table of Contents
@@ -51,12 +51,12 @@ pip install "git+https://github.com/tannerkoza/navsuite.git#egg=<package>&subdir
 In this command, `<package>` can simply be replaced by one of the package names in the `src/` directory (e.g., `navtools`). Additionally, these packages can be installed with any [PEP 517](https://peps.python.org/pep-0517/) compatible build system (in addition to `pip`) and their alternative to the above command.
 
 ### Recommendations
-- Given the adherence to PEP 517, the editable install command for your respective build system *should* work for each ***navsuite*** package. However, it is recommended to use [rye](https://rye.astral.sh/) in accordance with the [contributing instructions](/CONTRIBUTING.md) for the best editable install experience.
+- Given the adherence to PEP 517, the editable install command for your respective build system *should* work for each ***navsuite*** package. However, it is recommended to use [uv](https://docs.astral.sh/uv/) in accordance with the [contributing instructions](/CONTRIBUTING.md) for the best editable install experience.
 - As always, it is recommended you install these packages to a virtual environment. How that virtual environment is generated is completely up to you.
 
 
 
-## ✍️ Contributing <a name = "contributing"></a> 
+## ✍️ Contributing <a name = "contributing"></a>
 Feel free to fork and submit [pull requests](https://github.com/tannerkoza/navsuite/pulls) for review after looking at the [contributing instructions](/CONTRIBUTING.md)! If you're interested in becoming a regular contributor, email me at [kozatanner@gmail.com](mailto:kozatanner@gmail.com).
 
 ![GitHub contributors](https://img.shields.io/github/contributors/tannerkoza/navsuite)
@@ -66,4 +66,3 @@ Feel free to fork and submit [pull requests](https://github.com/tannerkoza/navsu
 This work is inspired by my time as a student at Auburn University's [GPS & Vehicle Dynamics Laboratory](https://gavlab.auburn.edu/#gsc.tab=0) and all of my fellow lab-mates I met there.
   <!-- - Inspiration -->
   <!-- - References
-

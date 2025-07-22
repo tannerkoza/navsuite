@@ -6,7 +6,10 @@ authors = [
     { name = "Tanner Koza", email = "kozatanner@gmail.com" }
 ]
 dependencies = [
-    "numba>=0.60.0",
+    "numpy>=2.2.6",
+    "aspn23 @ git+https://github.com/tannerkoza/aspn-python.git@main#subdirectory=aspn-py",
+    "aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git@main#subdirectory=aspn-lcm",
+    "prompt-toolkit>=3.0.51",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -14,10 +17,6 @@ requires-python = ">= 3.10"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.rye]
-managed = true
-dev-dependencies = []
 
 [tool.hatch.metadata]
 allow-direct-references = true
