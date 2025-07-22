@@ -1,20 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Union
 
-from aspn23_lcm import type_satnav_satellite_system, type_satnav_signal_descriptor
-
-SIGNAL_DESCRIPTORS = {
-    value: name.replace("SIGNAL_DESCRIPTOR_", "")
-    for name, value in vars(type_satnav_signal_descriptor).items()
-    if name.isupper()
-}
-
-SATELLITE_SYSTEMS = {
-    value: name.replace("SATELLITE_SYSTEM_", "")
-    for name, value in vars(type_satnav_satellite_system).items()
-    if name.isupper()
-}
-
 
 @dataclass
 class SatelliteSignal:
