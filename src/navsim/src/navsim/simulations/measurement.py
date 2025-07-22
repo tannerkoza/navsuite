@@ -75,13 +75,7 @@ class MeasurementSimulation:
         utc_timestamps: dt.datetime | list[dt.datetime],
         rx_pos: ArrayLike,
         rx_vel: ArrayLike,
-    ) -> Generator[
-        tuple[
-            list[MeasurementNavsimSatnavWithSvData],
-            list[MeasurementPosition],
-            list[MeasurementVelocity],
-        ]
-    ]:
+    ):
         """
         Simulate satellite navigation measurements and generate time blocks of ASPN measurements.
 
