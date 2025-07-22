@@ -6,9 +6,13 @@ authors = [
     { name = "Tanner Koza", email = "kozatanner@gmail.com" }
 ]
 dependencies = [
+    "aiohttp>=3.12.14",
+    "aspn23>=0.0.0",
+    "aspn23-lcm>=0.0.0",
     "navgnss",
     "navsim",
     "navtools",
+    "pandas>=2.3.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
