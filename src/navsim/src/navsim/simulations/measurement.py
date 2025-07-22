@@ -1,4 +1,6 @@
 import datetime as dt
+import pathlib as pl
+from typing import Generator
 
 import lcm
 import numpy as np
@@ -31,7 +33,7 @@ from navgnss.los import compute_range_and_uv, compute_range_rate, compute_visibi
 from navgnss.signals import SATELLITE_SIGNALS
 from navtools.constants import EARTH_RATE, SPEED_OF_LIGHT
 from navtools.conversions import datetime2gps, ecef2geodetic
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
 from navsim.channel import (
@@ -46,22 +48,59 @@ from navsim.simulations import MeasurementConfiguration
 
 
 class MeasurementSimulation:
+    """
+    Simulate satellite navigation measurements and optionally write to custom ASPN data to LCM logs.
+    """
+
     LOOKAHEAD_INTERVAL = 30  # [s]
 
-    def __init__(
-        self, config: MeasurementConfiguration, output_path: str | None = None
-    ):
-        self._initialize(config=config)
+    # LCM log channels
+    SATNAV_CHANNEL = "aspn23://navsim/measurement_satnav_with_sv_data"
+    TRUE_POS_CHANNEL = "aspn23://navsim/true_measurement_position"
+    TRUE_VEL_CHANNEL = "aspn23://navsim/true_measurement_velocity"
 
-        if output_path:
-            self._log = lcm.EventLog(path=output_path, mode="w", overwrite=True)
+    def __init__(self, config: MeasurementConfiguration):
+        """
+        Initialize MeasurementSimulation with configuration.
+
+        Parameters
+        ----------
+        config : MeasurementConfiguration
+            Configuration for measurement simulation (ionosphere, receivers, constellation, etc.).
+        """
+        self._initialize(config=config)
 
     def simulate(
         self,
         utc_timestamps: dt.datetime | list[dt.datetime],
         rx_pos: ArrayLike,
         rx_vel: ArrayLike,
-    ):
+    ) -> Generator[
+        tuple[
+            list[MeasurementNavsimSatnavWithSvData],
+            list[MeasurementPosition],
+            list[MeasurementVelocity],
+        ]
+    ]:
+        """
+        Simulate satellite navigation measurements and generate time blocks of ASPN measurements.
+
+        Parameters
+        ----------
+        utc_timestamps : datetime or list of datetime
+            UTC timestamps at which to simulate measurements.
+        rx_pos : ArrayLike
+            Receiver ECEF positions (N, 3).
+        rx_vel : ArrayLike
+            Receiver ECEF velocities (N, 3).
+
+        Returns
+        -------
+        Generator yielding tuple of:
+            - satnav messages (list),
+            - position messages (list),
+            - velocity messages (list)
+        """
         if not isinstance(utc_timestamps, list):
             utc_timestamps = list(utc_timestamps)
 
@@ -83,268 +122,336 @@ class MeasurementSimulation:
         # generate measurements from emitter states
         return self._process()
 
-    def _process(self):
-        initial_ts = self._timestamps[0][0]
-        niterations = len(self._datetimes)
+    def simulate_to_lcm(
+        self,
+        utc_timestamps: dt.datetime | list[dt.datetime],
+        rx_pos: ArrayLike,
+        rx_vel: ArrayLike,
+        log_path: str | pl.Path,
+    ):
+        """
+        Simulate satellite navigation measurements and write ASPN measurement data to LCM log file.
 
+        Parameters
+        ----------
+        utc_timestamps : datetime or list of datetime
+        rx_pos : ArrayLike
+        rx_vel : ArrayLike
+        log_path : str or Path
+            File path to write LCM events into.
+        """
+        # create LCM log file and allow it to be overwritten if it exists
+        lcm_log = lcm.EventLog(path=log_path, mode="w", overwrite=True)
+
+        # simulate measurements and return generator
+        measurements = self.simulate(
+            utc_timestamps=utc_timestamps, rx_pos=rx_pos, rx_vel=rx_vel
+        )
+
+        niterations = len(self._datetimes)
         with tqdm(total=niterations) as progress_bar:
-            for block in range(niterations):
-                datetimes = self._datetimes[block]
+            initial_ts = self._timestamps[0][0]  # extract for progress bar
+
+            for block, data in enumerate(measurements):
                 timestamps = self._timestamps[block]
                 sim_time = timestamps.max() - initial_ts
 
-                rx_pos = np.array(self._rx_pos[block])
-                rx_vel = np.array(self._rx_vel[block])
-                rx_cb = np.array(self._rx_cb[block])
-                rx_cd = np.array(self._rx_cd[block])
+                for idx in range(timestamps.size):
+                    # extract aspn-py messages
+                    satnav_msg = data[0][idx]
+                    pos_msg = data[1][idx]
+                    vel_msg = data[2][idx]
 
-                lla_rx_pos = ecef2geodetic(
-                    x=rx_pos[:, 0], y=rx_pos[:, 1], z=rx_pos[:, 2]
+                    utime = int(satnav_msg.time_of_validity.elapsed_nsec * 1e-3)
+
+                    # convert aspn-py to lcm
+                    satnav_lcm_msg = measurement_navsim_satnav_with_sv_data_to_lcm(
+                        old=satnav_msg
+                    )
+                    pos_lcm_msg = measurement_position_to_lcm(old=pos_msg)
+                    vel_lcm_msg = measurement_velocity_to_lcm(old=vel_msg)
+
+                    # write lcm to log file
+                    lcm_log.write_event(
+                        utime=utime,
+                        channel=MeasurementSimulation.SATNAV_CHANNEL,
+                        data=satnav_lcm_msg.encode(),
+                    )
+                    lcm_log.write_event(
+                        utime=utime,
+                        channel=MeasurementSimulation.TRUE_POS_CHANNEL,
+                        data=pos_lcm_msg.encode(),
+                    )
+                    lcm_log.write_event(
+                        utime=utime,
+                        channel=MeasurementSimulation.TRUE_VEL_CHANNEL,
+                        data=vel_lcm_msg.encode(),
+                    )
+
+                desc_update = f"Simulating Measurements (Sim. Time: {sim_time:.3f} [s])"
+                progress_bar.desc = desc_update
+                progress_bar.update()
+
+    def _process(self):
+        niterations = len(self._datetimes)
+
+        for block in range(niterations):
+            # extract data within block
+            datetimes = self._datetimes[block]
+            timestamps = self._timestamps[block]
+
+            rx_pos = np.array(self._rx_pos[block])
+            rx_vel = np.array(self._rx_vel[block])
+            rx_cb = np.array(self._rx_cb[block])
+            rx_cd = np.array(self._rx_cd[block])
+
+            # compute emitter states at receive time
+            emitters = self._emitters.process(utc_timestamps=datetimes)
+
+            # create aspn metadata for satnav, position, and velocity messages
+            aspn_headers, aspn_timestamps, aspn_satnav_times = (
+                self._create_aspn_metadata(
+                    datetimes=datetimes, timestamps=timestamps, block=block
+                )
+            )
+
+            # compute emitter states, line-of-sight states, and visibility
+            satnav_data = {}
+
+            for emitter_id, (emitter_pos_rx, emitter_vel_rx) in emitters.items():
+                # compute emitter states at transmit time
+                emitter_pos_tx, emitter_vel_tx = self._apply_sagnac(
+                    rx_pos=rx_pos,
+                    emitter_pos=emitter_pos_rx,
+                    emitter_vel=emitter_vel_rx,
                 )
 
-                # compute emitter states at receive time
-                emitters = self._emitters.process(utc_timestamps=datetimes)
+                # compute true line of sight states
+                los_range, los_range_rate = self._compute_los_states(
+                    rx_pos=rx_pos,
+                    rx_vel=rx_vel,
+                    emitter_pos=emitter_pos_tx,
+                    emitter_vel=emitter_vel_tx,
+                )
 
-                # create aspn headers
-                aspn_headers = create_aspn_headers(timestamps=timestamps, block=block)
+                view_status, az, el = self._compute_visibility(
+                    emitter_id=emitter_id,
+                    rx_pos=rx_pos,
+                    emitter_pos=emitter_pos_tx,
+                )
 
-                # create aspn timestamps
-                aspn_timestamps = [
-                    TypeTimestamp(elapsed_nsec=int(ts)) for ts in timestamps * 1e9
-                ]
+                # ignore emitter if not in view during block
+                if view_status.sum() == 0:
+                    continue
 
-                # create aspn satnav times
-                _, week_number, seconds_of_week = datetime2gps(datetime=datetimes)
-                aspn_satnav_times = [
-                    TypeSatnavTime(
-                        week_number=week,
-                        seconds_of_week=secs,
-                        time_reference=TypeSatnavTimeTimeReference(value=0),
+                # sv time errors (not currently modeled)
+                emitter_cb = np.zeros_like(timestamps)
+                emitter_cd = np.zeros_like(timestamps)
+
+                # package emitter data into aspn type
+                system = self._get_emitter_constellation(emitter_id=emitter_id)
+                aspn_satnav_sv_data = _create_aspn_satnav_sv_data(
+                    timestamps=timestamps,
+                    prn=emitter_id,
+                    system=system,
+                    sv_data_time=aspn_satnav_times,
+                    sv_pos=emitter_pos_rx,
+                    sv_vel=emitter_vel_rx,
+                    sv_clock_bias=emitter_cb,
+                    sv_clock_drift=emitter_cd,
+                )
+
+                # filter by view status
+                aspn_satnav_sv_data[view_status == False] = None
+
+                # compute signal-based errors
+                constellation = self._get_emitter_constellation(emitter_id=emitter_id)
+                signals = self._signals[constellation]
+
+                for signal_name, signal in signals.items():
+                    # compute channel errors
+                    iono_delays, iono_drifts, tropo_delays, tropo_drifts = (
+                        self._compute_atmosphere_errors(
+                            timestamps=datetimes,
+                            rx_pos=rx_pos,
+                            az=az,
+                            el=el,
+                            fcarrier=signal.fcarrier,
+                        )
                     )
-                    for week, secs in zip(week_number, seconds_of_week)
-                ]
 
-                emitter_data = {}
+                    # compute received signal power
+                    cn0 = compute_carrier_to_noise(
+                        range=los_range,
+                        transmit_eirp=self._transmit_eirps[constellation],
+                        fcarrier=signal.fcarrier,
+                        cn0_attenuation=self._cn0_attenuations[constellation],
+                    )
+                    cn0 -= self._cn0_attenuations[constellation]
 
-                for emitter_id, (emitter_pos_rx, emitter_vel_rx) in emitters.items():
-                    # compute emitter states at transmit time
-                    emitter_pos_tx, emitter_vel_tx = self._apply_sagnac(
-                        rx_pos=rx_pos,
-                        emitter_pos=emitter_pos_rx,
-                        emitter_vel=emitter_vel_rx,
+                    # compute measurement noise
+                    (
+                        dll_sigma,
+                        dll_noise,
+                        fll_sigma,
+                        fll_noise,
+                        pll_sigma,
+                        pll_noise,
+                    ) = self._compute_rx_noise(cn0=cn0, fcarrier=signal.fcarrier)
+
+                    # compute pseudorange
+                    prange = (
+                        los_range
+                        + iono_delays
+                        + tropo_delays
+                        + rx_cb
+                        - emitter_cb
+                        + dll_noise
                     )
 
-                    # compute true line of sight states
-                    los_range, los_range_rate = self._compute_los_states(
-                        rx_pos=rx_pos,
-                        rx_vel=rx_vel,
-                        emitter_pos=emitter_pos_tx,
-                        emitter_vel=emitter_vel_tx,
+                    # compute doppler
+                    noiseless_prange_rate = (
+                        los_range_rate - iono_drifts + tropo_drifts + rx_cd - emitter_cd
                     )
+                    prange_rate = noiseless_prange_rate + fll_noise
+                    doppler = -prange_rate * signal.fcarrier / SPEED_OF_LIGHT
 
-                    view_status, az, el = self._compute_visibility(
-                        emitter_id=emitter_id,
-                        rx_pos=rx_pos,
-                        emitter_pos=emitter_pos_tx,
+                    # compute carrier phase
+                    # #TODO: figure out timing and correct calculation
+                    noiseless_doppler = (
+                        -noiseless_prange_rate * signal.fcarrier / SPEED_OF_LIGHT
                     )
+                    carrier_phase = np.cumsum(noiseless_doppler) + pll_noise
+                    lock_count = np.arange(0, carrier_phase.size)
 
-                    # ignore emitter if not in view during block
-                    if view_status.sum() == 0:
-                        continue
-
-                    # sv time errors (not currently modeled)
-                    emitter_cb = np.zeros_like(timestamps)
-                    emitter_cd = np.zeros_like(timestamps)
-
-                    constellation = self._get_emitter_constellation(
-                        emitter_id=emitter_id
-                    )
-                    signals = self._signals[constellation]
-
-                    # package emitter data
-                    system = self._get_emitter_constellation(emitter_id=emitter_id)
-                    satnav_sv_data = create_aspn_satnav_sv_data(
+                    # package observable data in aspn type
+                    aspn_satnav_obs = _create_aspn_satnav_obs(
                         timestamps=timestamps,
+                        satellite_system=system,
+                        signal_descriptor=signal_name,
                         prn=emitter_id,
-                        system=system,
-                        sv_data_time=aspn_satnav_times,
-                        sv_pos=emitter_pos_rx,
-                        sv_vel=emitter_vel_rx,
-                        sv_clock_bias=emitter_cb,
-                        sv_clock_drift=emitter_cd,
+                        frequency=signal.fcarrier,
+                        pseudorange=prange,
+                        pseudorange_variance=dll_sigma**2,
+                        pseudorange_rate=doppler,
+                        pseudorange_rate_variance=fll_sigma**2,
+                        carrier_phase=carrier_phase,
+                        carrier_phase_variance=pll_sigma**2,
+                        c_n0=cn0,
+                        lock_count=lock_count,
+                        iono_correction_applied=np.logical_not(self._ionosphere),
+                        tropo_correction_applied=np.logical_not(self._troposphere),
                     )
 
                     # filter by view status
-                    satnav_sv_data[view_status == False] = None
+                    aspn_satnav_obs[view_status == False] = None
 
-                    for signal_name, signal in signals.items():
-                        # compute channel errors
-                        iono_delays, iono_drifts, tropo_delays, tropo_drifts = (
-                            self._compute_atmosphere_errors(
-                                timestamps=datetimes,
-                                rx_pos=rx_pos,
-                                az=az,
-                                el=el,
-                                fcarrier=signal.fcarrier,
-                            )
-                        )
+                    satnav_data[emitter_id] = {
+                        signal_name: (aspn_satnav_obs, aspn_satnav_sv_data)
+                    }
 
-                        # compute signal power and resulting measurement noise
-                        cn0 = compute_carrier_to_noise(
-                            range=los_range,
-                            transmit_eirp=self._transmit_eirps[constellation],
-                            fcarrier=signal.fcarrier,
-                            cn0_attenuation=self._cn0_attenuations[constellation],
-                        )
-                        cn0 -= self._cn0_attenuations[constellation]
+            aspn_satnav, aspn_position, aspn_velocity = self._create_aspn_measurements(
+                aspn_headers=aspn_headers,
+                aspn_timestamps=aspn_timestamps,
+                aspn_satnav_times=aspn_satnav_times,
+                rx_pos=rx_pos,
+                rx_vel=rx_vel,
+                satnav_data=satnav_data,
+            )
 
-                        (
-                            dll_sigma,
-                            dll_noise,
-                            fll_sigma,
-                            fll_noise,
-                            pll_sigma,
-                            pll_noise,
-                        ) = self._compute_rx_noise(cn0=cn0, fcarrier=signal.fcarrier)
+            yield aspn_satnav, aspn_position, aspn_velocity
 
-                        # compute pseudorange
-                        prange = (
-                            los_range
-                            + iono_delays
-                            + tropo_delays
-                            + rx_cb
-                            - emitter_cb
-                            + dll_noise
-                        )
+    def _create_aspn_metadata(
+        self, datetimes: list[dt.datetime], timestamps: list[float], block: int
+    ):
+        # create aspn headers
+        aspn_headers = _create_aspn_headers(timestamps=timestamps, block=block)
 
-                        # compute doppler
-                        noiseless_prange_rate = (
-                            los_range_rate
-                            - iono_drifts
-                            + tropo_drifts
-                            + rx_cd
-                            - emitter_cd
-                        )
-                        prange_rate = noiseless_prange_rate + fll_noise
-                        doppler = -prange_rate * signal.fcarrier / SPEED_OF_LIGHT
+        # create aspn timestamps
+        aspn_timestamps = [
+            TypeTimestamp(elapsed_nsec=int(ts)) for ts in timestamps * 1e9
+        ]
 
-                        # compute carrier phase
-                        # #TODO: figure out timing and correct calculation
-                        noiseless_doppler = (
-                            -noiseless_prange_rate * signal.fcarrier / SPEED_OF_LIGHT
-                        )
-                        carrier_phase = np.cumsum(noiseless_doppler) + pll_noise
-                        lock_count = np.arange(0, carrier_phase.size)
+        # create aspn satnav times
+        _, week_number, seconds_of_week = datetime2gps(datetime=datetimes)
+        aspn_satnav_times = [
+            TypeSatnavTime(
+                week_number=week,
+                seconds_of_week=secs,
+                time_reference=TypeSatnavTimeTimeReference(value=0),
+            )
+            for week, secs in zip(week_number, seconds_of_week)
+        ]
 
-                        satnav_obs = create_aspn_satnav_obs(
-                            timestamps=timestamps,
-                            satellite_system=system,
-                            signal_descriptor=signal_name,
-                            prn=emitter_id,
-                            frequency=signal.fcarrier,
-                            pseudorange=prange,
-                            pseudorange_variance=dll_sigma**2,
-                            pseudorange_rate=doppler,
-                            pseudorange_rate_variance=fll_sigma**2,
-                            carrier_phase=carrier_phase,
-                            carrier_phase_variance=pll_sigma**2,
-                            c_n0=cn0,
-                            lock_count=lock_count,
-                            iono_correction_applied=np.logical_not(self._ionosphere),
-                            tropo_correction_applied=np.logical_not(self._troposphere),
-                        )
+        return aspn_headers, aspn_timestamps, aspn_satnav_times
 
-                        # filter by view status
-                        satnav_obs[view_status == False] = None
+    def _create_aspn_measurements(
+        self,
+        aspn_headers: list[TypeHeader],
+        aspn_timestamps: list[TypeTimestamp],
+        aspn_satnav_times: list[TypeSatnavTime],
+        rx_pos: NDArray[np.float64],
+        rx_vel: NDArray[np.float64],
+        satnav_data: dict[str, dict],
+    ):
+        # convert position to geodetic for aspn standard
+        lla_rx_pos = ecef2geodetic(x=rx_pos[:, 0], y=rx_pos[:, 1], z=rx_pos[:, 2])
 
-                        emitter_data[emitter_id] = {
-                            signal_name: (satnav_obs, satnav_sv_data)
-                        }
+        satnav_msgs = []
+        position_msgs = []
+        velocity_msgs = []
 
-                # Using the generator
-                measurements = []
-                position = []
-                velocity = []
-                for idx in range(timestamps.size):
-                    epoch_data = list(create_measurement_epochs(emitter_data, idx))
+        ntimestamps = len(aspn_timestamps)
+        for idx in range(ntimestamps):
+            epoch_data = list(_create_satnav_epochs(satnav_data, idx))
 
-                    if epoch_data:
-                        epoch_obs, epoch_sv_data = zip(*epoch_data)
+            if epoch_data:
+                epoch_obs, epoch_sv_data = zip(*epoch_data)
 
-                        num_signal_types = np.unique(
-                            np.array([obs.signal_descriptor for obs in epoch_obs])
-                        ).size
-                        measurement = MeasurementNavsimSatnavWithSvData(
-                            header=aspn_headers[idx],
-                            time_of_validity=aspn_timestamps[idx],
-                            receiver_clock_time=aspn_satnav_times[idx],
-                            num_signal_types=num_signal_types,
-                            obs=list(epoch_obs),
-                            sv_data=list(epoch_sv_data),
-                            integrity=[],
-                        )
-
-                        pos = MeasurementPosition(
-                            header=aspn_headers[idx],
-                            time_of_validity=aspn_timestamps[idx],
-                            reference_frame=MeasurementPositionReferenceFrame(value=0),
-                            term1=lla_rx_pos.lat[idx],
-                            term2=lla_rx_pos.lon[idx],
-                            term3=lla_rx_pos.alt[idx],
-                            covariance=np.zeros((3, 3)),
-                            error_model=MeasurementPositionErrorModel(value=0),
-                            error_model_params=np.zeros(1),
-                            integrity=[],
-                        )
-
-                        vel = MeasurementVelocity(
-                            header=aspn_headers[idx],
-                            time_of_validity=aspn_timestamps[idx],
-                            reference_frame=MeasurementVelocityReferenceFrame(value=1),
-                            x=rx_vel[idx, 0],
-                            y=rx_vel[idx, 1],
-                            z=rx_vel[idx, 2],
-                            covariance=np.zeros((3, 3)),
-                            error_model=MeasurementVelocityErrorModel(value=0),
-                            error_model_params=np.zeros(1),
-                            integrity=[],
-                        )
-
-                        measurements.append(measurement)
-                        position.append(pos)
-                        velocity.append(vel)
-
-                satnav_channel = "aspn23://navsim/measurement_satnav_with_sv_data"
-                true_rx_pos_channel = "aspn23://navsim/true_measurement_position"
-                true_rx_vel_channel = "aspn23://navsim/true_measurement_velocity"
-
-                for idx in range(timestamps.size):
-                    satnav = measurements[idx]
-                    pos = position[idx]
-                    vel = velocity[idx]
-
-                    utime = int(satnav.time_of_validity.elapsed_nsec * 1e-3)
-
-                    satnav_msg = measurement_navsim_satnav_with_sv_data_to_lcm(
-                        old=satnav
-                    )
-                    pos_msg = measurement_position_to_lcm(old=pos)
-                    vel_msg = measurement_velocity_to_lcm(old=vel)
-
-                    self._log.write_event(
-                        utime=utime, channel=satnav_channel, data=satnav_msg.encode()
-                    )
-                    self._log.write_event(
-                        utime=utime, channel=true_rx_pos_channel, data=pos_msg.encode()
-                    )
-                    self._log.write_event(
-                        utime=utime, channel=true_rx_vel_channel, data=vel_msg.encode()
-                    )
-
-                progress_bar.desc = (
-                    f"Simulating Measurements (Sim. Time: {sim_time:.3f} [s])"
+                num_signal_types = np.unique(
+                    np.array([obs.signal_descriptor for obs in epoch_obs])
+                ).size
+                sv = MeasurementNavsimSatnavWithSvData(
+                    header=aspn_headers[idx],
+                    time_of_validity=aspn_timestamps[idx],
+                    receiver_clock_time=aspn_satnav_times[idx],
+                    num_signal_types=num_signal_types,
+                    obs=list(epoch_obs),
+                    sv_data=list(epoch_sv_data),
+                    integrity=[],
                 )
-                progress_bar.update()
+
+                pos = MeasurementPosition(
+                    header=aspn_headers[idx],
+                    time_of_validity=aspn_timestamps[idx],
+                    reference_frame=MeasurementPositionReferenceFrame(value=0),
+                    term1=lla_rx_pos.lat[idx],
+                    term2=lla_rx_pos.lon[idx],
+                    term3=lla_rx_pos.alt[idx],
+                    covariance=np.zeros((3, 3)),
+                    error_model=MeasurementPositionErrorModel(value=0),
+                    error_model_params=np.zeros(1),
+                    integrity=[],
+                )
+
+                vel = MeasurementVelocity(
+                    header=aspn_headers[idx],
+                    time_of_validity=aspn_timestamps[idx],
+                    reference_frame=MeasurementVelocityReferenceFrame(value=1),
+                    x=rx_vel[idx, 0],
+                    y=rx_vel[idx, 1],
+                    z=rx_vel[idx, 2],
+                    covariance=np.zeros((3, 3)),
+                    error_model=MeasurementVelocityErrorModel(value=0),
+                    error_model_params=np.zeros(1),
+                    integrity=[],
+                )
+
+                satnav_msgs.append(sv)
+                position_msgs.append(pos)
+                velocity_msgs.append(vel)
+
+        return satnav_msgs, position_msgs, velocity_msgs
 
     def _initialize(self, config: MeasurementConfiguration):
         # assign non-constellation values
@@ -602,7 +709,7 @@ def _find_local_minima(array: ArrayLike):
     return np.array(all_minima)
 
 
-def create_aspn_headers(timestamps: ArrayLike, block: int):
+def _create_aspn_headers(timestamps: ArrayLike, block: int):
     headers = []
 
     vendor_id = 0
@@ -623,7 +730,7 @@ def create_aspn_headers(timestamps: ArrayLike, block: int):
     return np.array(headers)
 
 
-def create_aspn_satnav_sv_data(
+def _create_aspn_satnav_sv_data(
     timestamps: ArrayLike,
     prn: str,
     system: str,
@@ -655,7 +762,7 @@ def create_aspn_satnav_sv_data(
     return np.array(satnav_sv_data)
 
 
-def create_aspn_satnav_obs(
+def _create_aspn_satnav_obs(
     timestamps: ArrayLike,
     satellite_system: str,
     signal_descriptor: str,
@@ -701,7 +808,7 @@ def create_aspn_satnav_obs(
     return np.array(satnav_satnav_obs)
 
 
-def create_measurement_epochs(emitter_data, idx):
+def _create_satnav_epochs(emitter_data, idx):
     """Generator that yields valid signal pairs for a given epoch"""
     for emitter in emitter_data.values():
         for signal in emitter.values():

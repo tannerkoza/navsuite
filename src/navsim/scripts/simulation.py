@@ -36,8 +36,13 @@ def simulate():
     )
 
     # create simulation and begin
-    sim = MeasurementSimulation(config=config.measurement, output_path=lcm_log_path)
-    sim.simulate(utc_timestamps=sim_datetimes, rx_pos=rx_pos, rx_vel=rx_vel)
+    sim = MeasurementSimulation(config=config.measurement)
+    sim.simulate_to_lcm(
+        utc_timestamps=sim_datetimes,
+        rx_pos=rx_pos,
+        rx_vel=rx_vel,
+        log_path=lcm_log_path,
+    )
 
 
 def create_lcm_log_path(initial_datetime: dt.datetime, config_path: pl.Path) -> pl.Path:
