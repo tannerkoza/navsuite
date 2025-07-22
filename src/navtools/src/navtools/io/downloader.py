@@ -9,9 +9,9 @@ import pathlib as pl
 import shutil
 import tempfile
 import traceback
+from typing import Callable
 from urllib.parse import urljoin, urlparse
 
-from typing import Callable
 import aiohttp
 from tqdm.asyncio import tqdm_asyncio
 
