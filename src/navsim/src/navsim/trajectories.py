@@ -52,11 +52,11 @@ def translate_trajectory(
 
 
 def interpolate_trajectory(
-    time: ArrayLike[float],
-    lat: ArrayLike[float],
-    lon: ArrayLike[float],
-    alt: ArrayLike[float],
-    new_time: ArrayLike[float],
+    time: ArrayLike,
+    lat: ArrayLike,
+    lon: ArrayLike,
+    alt: ArrayLike,
+    new_time: ArrayLike,
     include_accel: bool = False,
     deg: bool = False,
 ) -> tuple[ECEF, ECEF] | tuple[ECEF, ECEF, ECEF]:

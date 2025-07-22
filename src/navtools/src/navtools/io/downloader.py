@@ -76,25 +76,20 @@ def _decompress_gzip(path: pl.Path) -> pl.Path:
     return decompressed_path
 
 
-def _match_compression_type(suffixes: list[str]) -> Callable[[pl.Path], pl.Path] | None:
-    """
-    Match the file extension to a compression type.
-
-    Parameters
-    ----------
-    suffixes : list of str
-        List of file suffixes.
-
-    Returns
-    -------
-    str or None
-        Compression type if matched, else None.
-    """
+def _match_compression_type(suffixes: list):
     str_suffixes = "".join(suffixes).lower()
-    for ext, comp_type in VALID_COMPRESSIONS.items():
-        if ext in str_suffixes:
-            return comp_type
-    return None
+
+    possible_compressions = [
+        compression
+        for compression in VALID_COMPRESSIONS.keys()
+        if compression in str_suffixes
+    ]
+
+    if not possible_compressions:
+        return None
+    else:
+        # returns largest string as substrings can be included with string comparison
+        return max(possible_compressions)
 
 
 def _build_decompressed_path(path: pl.Path) -> pl.Path:

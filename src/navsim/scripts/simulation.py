@@ -113,7 +113,7 @@ def generate_timeseries(
 
 def create_trajectory(
     trajectory_name: str,
-    sim_timeseries: ArrayLike[float],
+    sim_timeseries: ArrayLike,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
     Load and interpolate a predefined trajectory to simulation times.

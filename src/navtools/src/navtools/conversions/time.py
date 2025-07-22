@@ -9,7 +9,7 @@ from navtools.constants import GPS_EPOCH, SECONDS_PER_WEEK
 
 
 def datetime2gps(
-    datetime: ArrayLike[dt.datetime],
+    datetime: ArrayLike,
 ) -> (
     tuple[float, float, float]
     | tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]
