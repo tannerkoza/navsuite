@@ -5,7 +5,7 @@ description = "Add your description here"
 authors = [
     { name = "Tanner Koza", email = "kozatanner@gmail.com" }
 ]
-dependencies = ["navtools==0.1.0"]
+dependencies = ["navtools @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navtools"]
 readme = "README.md"
 requires-python = ">= 3.10"
 
