@@ -1,5 +1,6 @@
 import datetime as dt
 import pathlib as pl
+from typing import Generator
 
 import lcm
 import numpy as np
@@ -34,7 +35,6 @@ from navtools.constants import EARTH_RATE, SPEED_OF_LIGHT
 from navtools.conversions import datetime2gps, ecef2geodetic
 from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
-from typing import Generator
 
 from navsim.channel import (
     compute_carrier_to_noise,
@@ -150,7 +150,6 @@ class MeasurementSimulation:
 
         niterations = len(self._datetimes)
         with tqdm(total=niterations) as progress_bar:
-
             initial_ts = self._timestamps[0][0]  # extract for progress bar
 
             for block, data in enumerate(measurements):
@@ -220,7 +219,6 @@ class MeasurementSimulation:
             satnav_data = {}
 
             for emitter_id, (emitter_pos_rx, emitter_vel_rx) in emitters.items():
-
                 # compute emitter states at transmit time
                 emitter_pos_tx, emitter_vel_tx = self._apply_sagnac(
                     rx_pos=rx_pos,
@@ -271,7 +269,6 @@ class MeasurementSimulation:
                 signals = self._signals[constellation]
 
                 for signal_name, signal in signals.items():
-
                     # compute channel errors
                     iono_delays, iono_drifts, tropo_delays, tropo_drifts = (
                         self._compute_atmosphere_errors(
