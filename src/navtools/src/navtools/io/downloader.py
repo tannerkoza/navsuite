@@ -1,18 +1,18 @@
 __all__ = ["decompress", "FileDownloader"]
 
 
+import asyncio
+import datetime as dt
 import gzip
 import os
 import pathlib as pl
 import shutil
 import tempfile
-import datetime as dt
 import traceback
+from urllib.parse import urljoin, urlparse
 
-
-import asyncio
+from typing import Callable
 import aiohttp
-from urllib.parse import urlparse, urljoin
 from tqdm.asyncio import tqdm_asyncio
 
 
@@ -76,7 +76,7 @@ def _decompress_gzip(path: pl.Path) -> pl.Path:
     return decompressed_path
 
 
-def _match_compression_type(suffixes: list[str]) -> str | None:
+def _match_compression_type(suffixes: list[str]) -> Callable[[pl.Path], pl.Path] | None:
     """
     Match the file extension to a compression type.
 
@@ -285,7 +285,6 @@ class FileDownloader(object):
             return
 
         for url, path in zip(urls, output_paths):
-
             if path.exists():
                 self._exisiting_paths.append(path)
 
@@ -377,7 +376,6 @@ async def fetch_files_async(
         async def fetch_file(url, save_path):
             async with semaphore:
                 try:
-
                     async with session.get(
                         url, timeout=aiohttp.ClientTimeout(total=30)
                     ) as response:
