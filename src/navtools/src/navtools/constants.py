@@ -1,6 +1,5 @@
 import datetime as dt
 
-
 # time
 """A collection of time constants."""
 SECONDS_PER_HOUR = 3600.0
