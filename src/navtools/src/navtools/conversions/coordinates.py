@@ -12,7 +12,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from navtools.constants import GeodeticDatum
+from navtools.geodesy import GeodeticDatum
 
 
 class ECI(NamedTuple):

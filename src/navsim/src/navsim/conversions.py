@@ -39,7 +39,7 @@ def C_teme2itrf(time: Time):
     jd1 = time.ut1.jd1
     jd2 = time.ut1.jd2
 
-    time = time if time.shape else [time]
+    # time = time if time.shape else [time]
 
     # Assume get_polar_motion can handle vector input — otherwise vectorize/memoize it
     xp, yp = get_polar_motion(time)
