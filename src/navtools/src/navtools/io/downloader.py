@@ -229,16 +229,16 @@ class FileDownloader(object):
 
         # try and fetch downloadble urls, extend succesful downloads
         if self._downloadable_paths:
-            self._exisiting_paths.extend(
-                asyncio.run(
-                    fetch_files_async(
-                        urls=self._urls,
-                        output_paths=self._downloadable_paths,
-                        max_concurrent=max_concurrent,
-                        progress_desc=progress_desc,
-                    )
+            fetched_paths = asyncio.run(
+                fetch_files_async(
+                    urls=self._urls,
+                    output_paths=self._downloadable_paths,
+                    max_concurrent=max_concurrent,
+                    progress_desc=progress_desc,
                 )
             )
+            fetched_paths = [path for path in fetched_paths if path is not None]
+            self._exisiting_paths.extend(fetched_paths)
 
         self._output_paths = [
             (
