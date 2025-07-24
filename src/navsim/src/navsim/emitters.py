@@ -4,9 +4,12 @@ from itertools import compress
 
 import numpy as np
 from astropy.time import Time
+from navgnss.los import compute_visibility
 from navtools.constants import SECONDS_PER_WEEK
-from navtools.io import FileDownloader, decompress
+from navtools.geodesy import GeodeticDatum
+from navtools.io import FileDownloader
 from navtools.io.parse import parse_sp3, parse_tle
+from numpy.typing import ArrayLike
 from scipy.interpolate import PchipInterpolator
 from sgp4.api import Satrec, SatrecArray
 from zoneinfo import ZoneInfo
@@ -18,41 +21,62 @@ from navsim.conversions import teme2itrf
 class SupportedConstellation:
     eph_format: str
     eph_name: str
+    orbit_type: str
     url_name: str | None = None
 
 
 class SatelliteEmitters:
     FIRST_DATETIME = dt.datetime(year=2023, month=8, day=11, tzinfo=dt.timezone.utc)
+    MEO_RADIUS_THRESHOLD = (
+        45000000  # [m] sligthly beyond GEO radius from ECEF frame origin
+    )
+    LEO_RADIUS_THRESHOLD = (
+        9000000  # [m] sligthly beyond LEO radius from ECEF frame origin
+    )
 
     SUPPORTED_CONSTELLATIONS = {
-        "gps": SupportedConstellation(eph_format="sp3", eph_name="G"),
-        "galileo": SupportedConstellation(eph_format="sp3", eph_name="E"),
-        "glonass": SupportedConstellation(eph_format="sp3", eph_name="R"),
-        "beidou": SupportedConstellation(eph_format="sp3", eph_name="C"),
-        "qzss": SupportedConstellation(eph_format="sp3", eph_name="J"),
+        "gps": SupportedConstellation(eph_format="sp3", eph_name="G", orbit_type="MEO"),
+        "galileo": SupportedConstellation(
+            eph_format="sp3", eph_name="E", orbit_type="MEO"
+        ),
+        "glonass": SupportedConstellation(
+            eph_format="sp3", eph_name="R", orbit_type="MEO"
+        ),
+        "beidou": SupportedConstellation(
+            eph_format="sp3", eph_name="C", orbit_type="MEO"
+        ),
+        "qzss": SupportedConstellation(
+            eph_format="sp3", eph_name="J", orbit_type="MEO"
+        ),
         "iridium": SupportedConstellation(
-            eph_format="tle", eph_name="IRIDIUM", url_name="iridium-NEXT"
+            eph_format="tle",
+            eph_name="IRIDIUM",
+            url_name="iridium-NEXT",
+            orbit_type="LEO",
         ),
         "orbcomm": SupportedConstellation(
-            eph_format="tle", eph_name="ORBCOMM", url_name="orbcomm"
+            eph_format="tle", eph_name="ORBCOMM", url_name="orbcomm", orbit_type="LEO"
         ),
         "globalstar": SupportedConstellation(
-            eph_format="tle", eph_name="GLOBALSTAR", url_name="globalstar"
+            eph_format="tle",
+            eph_name="GLOBALSTAR",
+            url_name="globalstar",
+            orbit_type="LEO",
         ),
         "oneweb": SupportedConstellation(
-            eph_format="tle", eph_name="ONEWEB", url_name="oneweb"
+            eph_format="tle", eph_name="ONEWEB", url_name="oneweb", orbit_type="LEO"
         ),
         "starlink": SupportedConstellation(
-            eph_format="tle", eph_name="STARLINK", url_name="starlink"
+            eph_format="tle", eph_name="STARLINK", url_name="starlink", orbit_type="LEO"
         ),
         "eutelsat": SupportedConstellation(
-            eph_format="tle", eph_name="EUTELSAT", url_name="eutelsat"
+            eph_format="tle", eph_name="EUTELSAT", url_name="eutelsat", orbit_type="LEO"
         ),
         "kuiper": SupportedConstellation(
-            eph_format="tle", eph_name="KUIPER", url_name="kuiper"
+            eph_format="tle", eph_name="KUIPER", url_name="kuiper", orbit_type="LEO"
         ),
         "qianfan": SupportedConstellation(
-            eph_format="tle", eph_name="QIANFAN", url_name="qianfan"
+            eph_format="tle", eph_name="QIANFAN", url_name="qianfan", orbit_type="LEO"
         ),
     }
 
@@ -80,6 +104,12 @@ class SatelliteEmitters:
             if SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name].eph_format
             == "sp3"
         }
+        self._eph_names = {
+            SatelliteEmitters.SUPPORTED_CONSTELLATIONS[
+                common_name
+            ].eph_name: SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name]
+            for common_name in casefolded_constellations
+        }
 
         self._tle_ids = None
         self._tle_lines = None
@@ -102,18 +132,20 @@ class SatelliteEmitters:
         self._initialze_time(new_time=new_time)
 
         # process each constellation based on ephemeris format
-        emitters = {}
+        self._emitters = {}
         if self._tle_constellations:
             tle_emitters = self._process_tle(
                 utc_time=utc_ts, min_inclination=min_inclination
             )
-            emitters.update(tle_emitters)
+            self._emitters.update(tle_emitters)
 
         if self._sp3_constellations:
             sp3_emitters = self._process_sp3(utc_time=utc_ts)
-            emitters.update(sp3_emitters)
+            self._emitters.update(sp3_emitters)
 
-        return emitters
+        self._remove_outliers()
+
+        return self._emitters
 
     def remove_emitters(self, emitter_id: str | list[str]):
         if isinstance(emitter_id, str):
@@ -131,6 +163,28 @@ class SatelliteEmitters:
             valid_sp3_mask = np.logical_not(np.isin(self._sp3_ids, emitter_id))
             self._sp3_ids = self._sp3_ids[valid_sp3_mask]
             self._sp3_states = list(compress(self._sp3_states, valid_sp3_mask.tolist()))
+
+    def find_in_view(self, rx_pos: ArrayLike, mask_angle: float):
+        new_emitters = {}
+
+        for emitter_id, (emitter_pos, emitter_vel) in self._emitters.items():
+            # determine visibility
+            status, _, _ = compute_visibility(
+                rx_pos=rx_pos,
+                emitter_pos=emitter_pos,
+                mask_angle=mask_angle,
+            )
+
+            if status.sum() == 0.0:
+                continue
+
+            out_of_view_mask = np.logical_not(status)
+            emitter_pos[out_of_view_mask] = np.nan
+            emitter_vel[out_of_view_mask] = np.nan
+
+            new_emitters[emitter_id] = (emitter_pos, emitter_vel)
+
+        return new_emitters
 
     def _initialze_time(self, new_time: Time):
         if self._initial_time != new_time:
@@ -189,8 +243,8 @@ class SatelliteEmitters:
             xyz_clk = states[1]
 
             pchip = PchipInterpolator(x=time, y=xyz_clk)
-            new_xyz_clk = pchip(utc_time.gps)
-            new_dxyz_clk = pchip(utc_time.gps, 1)
+            new_xyz_clk = np.atleast_2d(pchip(utc_time.gps))
+            new_dxyz_clk = np.atleast_2d(pchip(utc_time.gps, 1))
 
             emitters[emitter_id] = (
                 new_xyz_clk[:, :3],
@@ -326,3 +380,43 @@ class SatelliteEmitters:
             urls.append(url)
 
         return urls
+
+    def _remove_outliers(self):
+        new_emitters = {}
+
+        wgs84 = GeodeticDatum.from_datum("wgs84")
+        meo_allowable_ratio = SatelliteEmitters.MEO_RADIUS_THRESHOLD / wgs84.r0
+        leo_allowable_ratio = SatelliteEmitters.LEO_RADIUS_THRESHOLD / wgs84.r0
+
+        for emitter_id, (emitter_pos, emitter_vel) in self._emitters.items():
+            radius = np.linalg.norm(emitter_pos, axis=1)
+            max_ratio = radius.max() / wgs84.r0
+
+            orbit_type = self._get_emitter_orbit_type(emitter_id=emitter_id)
+
+            if orbit_type == "MEO":
+                invalid_orbit = max_ratio > meo_allowable_ratio
+
+            elif orbit_type == "LEO":
+                invalid_orbit = max_ratio > leo_allowable_ratio
+
+            else:
+                invalid_orbit = False
+
+            if invalid_orbit:
+                continue
+
+            new_emitters[emitter_id] = (emitter_pos, emitter_vel)
+
+        self._emitters = new_emitters
+
+    def _get_emitter_orbit_type(self, emitter_id: str):
+        orbit_type = next(
+            (
+                c.orbit_type
+                for eph_name, c in self._eph_names.items()
+                if emitter_id.startswith(eph_name)
+            )
+        )
+
+        return orbit_type

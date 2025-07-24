@@ -3,6 +3,8 @@ from numpy.typing import NDArray
 
 
 def to_cartesian_series(array: NDArray) -> NDArray:
+    array = np.atleast_2d(array)
+
     if array.ndim != 1:
         ncols = np.asarray(array[0]).size
 
