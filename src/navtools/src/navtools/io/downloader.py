@@ -320,6 +320,7 @@ async def fetch_files_async(
     output_paths: pl.Path | list[pl.Path],
     max_concurrent: int = 20,
     progress_desc: str = "Downloading File(s)",
+    disable_warning: bool = False,
 ):
     """
     Fetch files asynchronously and save directly to disk.
@@ -387,8 +388,11 @@ async def fetch_files_async(
                         return save_path
 
                 except Exception as e:
-                    print(f"There was an error fetching {url or 'unknown URL'}: {e}")
-                    traceback.print_exc()
+                    if disable_warning:
+                        print(
+                            f"There was an error fetching {url or 'unknown URL'}: {e}"
+                        )
+                        traceback.print_exc()
 
                     return
 
