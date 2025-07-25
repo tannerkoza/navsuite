@@ -7,7 +7,7 @@ from astropy.time import Time
 from navgnss.los import compute_visibility
 from navtools.constants import SECONDS_PER_WEEK
 from navtools.geodesy import GeodeticDatum
-from navtools.io import FileDownloader
+from navtools.io import FileDownloader, decompress
 from navtools.io.parse import parse_sp3, parse_tle
 from numpy.typing import ArrayLike
 from scipy.interpolate import PchipInterpolator
@@ -394,6 +394,9 @@ class SatelliteEmitters:
 
             orbit_type = self._get_emitter_orbit_type(emitter_id=emitter_id)
 
+            if orbit_type is None:
+                continue
+
             if orbit_type == "MEO":
                 invalid_orbit = max_ratio > meo_allowable_ratio
 
@@ -411,12 +414,15 @@ class SatelliteEmitters:
         self._emitters = new_emitters
 
     def _get_emitter_orbit_type(self, emitter_id: str):
-        orbit_type = next(
-            (
-                c.orbit_type
-                for eph_name, c in self._eph_names.items()
-                if emitter_id.startswith(eph_name)
+        try:
+            orbit_type = next(
+                (
+                    c.orbit_type
+                    for eph_name, c in self._eph_names.items()
+                    if emitter_id.startswith(eph_name)
+                )
             )
-        )
+        except:
+            orbit_type = None
 
         return orbit_type

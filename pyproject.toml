@@ -2,10 +2,16 @@
 name = "navsuite"
 version = "0.1.0"
 description = ""
-authors = [
-    { name = "Tanner Koza", email = "kozatanner@gmail.com" }
+authors = [{ name = "Tanner Koza", email = "kozatanner@gmail.com" }]
+dependencies = [
+    "aiohttp>=3.12.14",
+    "aspn23>=0.0.0",
+    "aspn23-lcm>=0.0.0",
+    "navgnss",
+    "navsim",
+    "navtools",
+    "pandas>=2.3.1",
 ]
-dependencies = []
 readme = "README.md"
 requires-python = ">= 3.10"
 
@@ -17,7 +23,7 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["src/navtools", "src/navsim", "src/navgnss"]
 
 [tool.uv.workspace]
 members = ["src/*",]
