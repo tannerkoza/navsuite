@@ -61,7 +61,7 @@ class SatelliteEmitters:
         ),
         "globalstar": SupportedConstellation(
             eph_format="tle",
-            eph_name="GLOBALSTAR M",
+            eph_name="GLOBALSTAR",
             url_name="globalstar",
             orbit_type="LEO",
         ),
