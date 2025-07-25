@@ -4,20 +4,20 @@ from collections import defaultdict
 from dataclasses import dataclass
 from itertools import compress
 from typing import Optional
-from zoneinfo import ZoneInfo
 
 import numpy as np
 from astropy.time import Time
-from numpy.typing import ArrayLike
-from scipy.interpolate import PchipInterpolator
-from sgp4.api import Satrec, SatrecArray
-
 from navgnss.los import compute_visibility
-from navsim.conversions import teme2itrf
 from navtools.constants import SECONDS_PER_WEEK
 from navtools.geodesy import GeodeticDatum
 from navtools.io import FileDownloader
 from navtools.io.parse import parse_sp3, parse_tle
+from numpy.typing import ArrayLike
+from scipy.interpolate import PchipInterpolator
+from sgp4.api import Satrec, SatrecArray
+from zoneinfo import ZoneInfo
+
+from navsim.conversions import teme2itrf
 
 
 @dataclass
