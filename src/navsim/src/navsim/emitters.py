@@ -30,7 +30,7 @@ class SupportedConstellation:
 class SatelliteEmitters:
     FIRST_DATETIME = dt.datetime(year=2023, month=8, day=11, tzinfo=dt.timezone.utc)
     MEO_RADIUS_THRESHOLD = (
-        45000000  # [m] sligthly beyond GEO radius from ECEF frame origin
+        55000000  # [m] sligthly beyond GEO radius from ECEF frame origin
     )
     LEO_RADIUS_THRESHOLD = (
         9000000  # [m] sligthly beyond LEO radius from ECEF frame origin
