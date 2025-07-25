@@ -1089,6 +1089,12 @@ requires-dist = [
 name = "navsuite"
 version = "0.1.0"
 source = { editable = "." }
+dependencies = [
+    { name = "navgnss" },
+    { name = "navplot" },
+    { name = "navsim" },
+    { name = "navtools" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1102,6 +1108,12 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "navgnss", editable = "src/navgnss" },
+    { name = "navplot", editable = "src/navplot" },
+    { name = "navsim", editable = "src/navsim" },
+    { name = "navtools", editable = "src/navtools" },
+]
 
 [package.metadata.requires-dev]
 dev = [

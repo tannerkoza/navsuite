@@ -2,10 +2,8 @@
 name = "navsuite"
 version = "0.1.0"
 description = ""
-authors = [
-    { name = "Tanner Koza", email = "kozatanner@gmail.com" }
-]
-dependencies = []
+authors = [{ name = "Tanner Koza", email = "kozatanner@gmail.com" }]
+dependencies = ["navtools", "navsim", "navgnss", "navplot"]
 readme = "README.md"
 requires-python = ">= 3.10"
 
@@ -20,7 +18,7 @@ allow-direct-references = true
 packages = ["src"]
 
 [tool.uv.workspace]
-members = ["src/*",]
+members = ["src/*"]
 
 [tool.uv.sources]
 navtools = { workspace = true }
