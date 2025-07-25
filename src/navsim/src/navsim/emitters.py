@@ -1,13 +1,15 @@
 import datetime as dt
+import re
 from dataclasses import dataclass
 from itertools import compress
+from typing import Optional
 
 import numpy as np
 from astropy.time import Time
 from navgnss.los import compute_visibility
 from navtools.constants import SECONDS_PER_WEEK
 from navtools.geodesy import GeodeticDatum
-from navtools.io import FileDownloader, decompress
+from navtools.io import FileDownloader
 from navtools.io.parse import parse_sp3, parse_tle
 from numpy.typing import ArrayLike
 from scipy.interpolate import PchipInterpolator
@@ -59,7 +61,7 @@ class SatelliteEmitters:
         ),
         "globalstar": SupportedConstellation(
             eph_format="tle",
-            eph_name="GLOBALSTAR",
+            eph_name="GLOBALSTAR M",
             url_name="globalstar",
             orbit_type="LEO",
         ),
@@ -89,27 +91,7 @@ class SatelliteEmitters:
         return self._sp3_constellations
 
     def __init__(self, constellations: list, disable_warnings: bool = True):
-        casefolded_constellations = [
-            constellation.casefold() for constellation in constellations
-        ]
-        self._tle_constellations = {
-            common_name: SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name]
-            for common_name in casefolded_constellations
-            if SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name].eph_format
-            == "tle"
-        }
-        self._sp3_constellations = {
-            common_name: SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name]
-            for common_name in casefolded_constellations
-            if SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name].eph_format
-            == "sp3"
-        }
-        self._eph_names = {
-            SatelliteEmitters.SUPPORTED_CONSTELLATIONS[
-                common_name
-            ].eph_name: SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name]
-            for common_name in casefolded_constellations
-        }
+        self._initialize_constellations(constellations=constellations)
 
         self._tle_ids = None
         self._tle_lines = None
@@ -185,6 +167,56 @@ class SatelliteEmitters:
             new_emitters[emitter_id] = (emitter_pos, emitter_vel)
 
         return new_emitters
+
+    def get_constellation(self, emitter_id: str) -> Optional[str]:
+        emitter_id = emitter_id.strip()
+
+        for name in self._constellations:
+            if self._eph_name_patterns[name].match(emitter_id):
+                return name
+
+    def _initialize_constellations(self, constellations: list[str]):
+        self._constellations = {}
+
+        casefolded_constellations = [
+            constellation.casefold() for constellation in constellations
+        ]
+
+        self._tle_constellations = {
+            common_name: SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name]
+            for common_name in casefolded_constellations
+            if SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name].eph_format
+            == "tle"
+        }
+        self._constellations.update(self._tle_constellations)
+
+        self._sp3_constellations = {
+            common_name: SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name]
+            for common_name in casefolded_constellations
+            if SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name].eph_format
+            == "sp3"
+        }
+        self._constellations.update(self._sp3_constellations)
+
+        self._eph_name_patterns: dict[str, re.Pattern] = {}
+
+        for name, cnst in self._constellations.items():
+            prefix = cnst.eph_name
+
+            if cnst.eph_format.lower() == "tle":
+                pattern = re.compile(rf"\b{re.escape(prefix)}\b", re.IGNORECASE)
+
+            if cnst.eph_format.lower() == "sp3":
+                pattern = re.compile(rf"^{prefix}\d{{2}}$", re.IGNORECASE)
+
+            self._eph_name_patterns[name] = pattern
+
+        self._eph_names = {
+            SatelliteEmitters.SUPPORTED_CONSTELLATIONS[
+                common_name
+            ].eph_name: SatelliteEmitters.SUPPORTED_CONSTELLATIONS[common_name]
+            for common_name in casefolded_constellations
+        }
 
     def _initialze_time(self, new_time: Time):
         if self._initial_time != new_time:
@@ -268,8 +300,19 @@ class SatelliteEmitters:
             file_entries = parse_tle(file_path=file, min_inclination=min_inclination)
             tle_entries.update(file_entries)
 
-        self._tle_ids = np.array(list(tle_entries.keys()))
-        self._tle_lines = np.array(list(tle_entries.values()))
+        tle_ids = []
+        tle_lines = []
+        for emitter_id, lines in tle_entries.items():
+            cnst = self.get_constellation(emitter_id=emitter_id)
+
+            if cnst is None:
+                continue
+
+            tle_ids.append(emitter_id)
+            tle_lines.append(lines)
+
+        self._tle_ids = np.array(tle_ids)
+        self._tle_lines = np.array(tle_lines)
 
     def _download_sp3_files(self):
         # download sp3s
@@ -392,7 +435,8 @@ class SatelliteEmitters:
             radius = np.linalg.norm(emitter_pos, axis=1)
             max_ratio = radius.max() / wgs84.r0
 
-            orbit_type = self._get_emitter_orbit_type(emitter_id=emitter_id)
+            cnst = self.get_constellation(emitter_id=emitter_id)
+            orbit_type = self._constellations[cnst].orbit_type
 
             if orbit_type is None:
                 continue
@@ -412,17 +456,3 @@ class SatelliteEmitters:
             new_emitters[emitter_id] = (emitter_pos, emitter_vel)
 
         self._emitters = new_emitters
-
-    def _get_emitter_orbit_type(self, emitter_id: str):
-        try:
-            orbit_type = next(
-                (
-                    c.orbit_type
-                    for eph_name, c in self._eph_names.items()
-                    if emitter_id.startswith(eph_name)
-                )
-            )
-        except:
-            orbit_type = None
-
-        return orbit_type
