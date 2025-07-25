@@ -10,6 +10,7 @@ dependencies = [
     "aspn23 @ git+https://github.com/tannerkoza/aspn-python.git@main#subdirectory=aspn-py",
     "aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git@main#subdirectory=aspn-lcm",
     "prompt-toolkit>=3.0.51",
+    "aiohttp>=3.12.14",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
