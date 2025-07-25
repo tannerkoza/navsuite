@@ -5,12 +5,13 @@ from dataclasses import dataclass
 import numpy as np
 import pyvista as pv
 import seaborn as sns
+from numpy.typing import ArrayLike, NDArray
+from pyvista import examples
+
 from navsim.emitters import SatelliteEmitters
 from navtools.conversions import ecef2geodetic, geodetic2ecef
 from navtools.geodesy import GeodeticDatum
 from navtools.utils import find_axis, ragged_to_array
-from numpy.typing import ArrayLike, NDArray
-from pyvista import examples
 
 
 @dataclass
@@ -197,12 +198,12 @@ def test():
     ecef_pos = np.array(geodetic2ecef(lat=latitude, lon=longitude, alt=0.0, deg=True))
     focal_position_name = "Denver, CO"
 
-    constellations = ["globalstar", "iridium", "oneweb", "orbcomm", "starlink"]
-    mask_angle = 35
+    constellations = ["gps", "glonass", "galileo", "beidou", "qzss", "globalstar"]
+    mask_angle = 25
 
-    initial_datetime = dt.datetime(year=2025, month=7, day=5, tzinfo=dt.timezone.utc)
-    duration = 3600  # [s]
-    time_step = 1  # [s]
+    initial_datetime = dt.datetime(year=2025, month=7, day=20, tzinfo=dt.timezone.utc)
+    duration = 3600 * 24  # [s]
+    time_step = 60  # [s]
 
     # initialize datetimes
     ntime_steps = int(np.ceil(duration / time_step)) + 1
@@ -211,8 +212,8 @@ def test():
 
     # simulate satellite states
     satellites = SatelliteEmitters(constellations=constellations)
-    satellites.process(utc_timestamps=datetimes)
-    satellite_states = satellites.find_in_view(rx_pos=ecef_pos, mask_angle=mask_angle)
+    satellite_states = satellites.process(utc_timestamps=datetimes)
+    # satellite_states = satellites.find_in_view(rx_pos=ecef_pos, mask_angle=mask_angle)
 
     navplot_constellations = []
 
@@ -220,19 +221,21 @@ def test():
         positions = {
             sv_name: states[0]
             for sv_name, states in satellite_states.items()
-            if sv_name.casefold().startswith(cnst)
+            if cnst.casefold() == satellites.get_constellation(emitter_id=sv_name)
         }
         velocities = {
             sv_name: states[1]
             for sv_name, states in satellite_states.items()
-            if sv_name.casefold().startswith(cnst)
+            if cnst.casefold() == satellites.get_constellation(emitter_id=sv_name)
         }
 
-        navplot_cnst = NavplotConstellation(
-            name=cnst, positions=positions, velocities=velocities
-        )
+        if positions and velocities:
 
-        navplot_constellations.append(navplot_cnst)
+            navplot_cnst = NavplotConstellation(
+                name=cnst, positions=positions, velocities=velocities
+            )
+
+            navplot_constellations.append(navplot_cnst)
 
     plot_satellites(
         constellations=navplot_constellations,
