@@ -174,7 +174,9 @@ def ecef2geodetic(
     lon = np.arctan2(y, x)
     alt = (beta - datum.r0 * T) * np.cos(lat) + (
         z - np.sign(z) * datum.r0 * np.sqrt(1 - datum.eccentricity**2)
-    ) * np.sin(lat)  # Eq. C.38
+    ) * np.sin(
+        lat
+    )  # Eq. C.38
 
     return GEODETIC(lat=lat, lon=lon, alt=alt)
 
@@ -413,7 +415,7 @@ def C_enu2ecef(
     sin_lon0 = np.sin(lon0)
 
     # Eq. 2.158 adapted for ENU instead of NED
-    x = -sin_lon0 * east + -sin_lat0 * cos_lat0 * north + cos_lat0 * cos_lon0 * up
+    x = -sin_lon0 * east + -sin_lat0 * cos_lon0 * north + cos_lat0 * cos_lon0 * up
     y = cos_lon0 * east + -sin_lat0 * sin_lon0 * north + cos_lat0 * sin_lon0 * up
     z = cos_lat0 * north + sin_lat0 * up
 
@@ -459,6 +461,7 @@ def enu2ecef(
     dx, dy, dz = C_enu2ecef(
         east=east, north=north, up=up, lat0=lat0, lon0=lon0, deg=deg
     )
+
     x0, y0, z0 = geodetic2ecef(
         lat=lat0, lon=lon0, alt=alt0, datum=datum, deg=deg
     )  # Eqs. 2.158 and 2.160
