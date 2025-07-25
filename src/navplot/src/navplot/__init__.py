@@ -1,2 +1,2 @@
-from .satellites import *
 from .geo import *
+from .satellites import *
