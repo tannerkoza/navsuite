@@ -1,2 +1,2 @@
-def main() -> None:
-    print("Hello from navplot!")
+from .satellites import *
+from .geo import *
