@@ -1,5 +1,6 @@
 import datetime as dt
 import re
+from collections import defaultdict
 from dataclasses import dataclass
 from itertools import compress
 from typing import Optional
@@ -274,7 +275,7 @@ class SatelliteEmitters:
             time = states[0]
             xyz_clk = states[1]
 
-            pchip = PchipInterpolator(x=time, y=xyz_clk)
+            pchip = PchipInterpolator(x=time, y=xyz_clk, extrapolate=True)
             new_xyz_clk = np.atleast_2d(pchip(utc_time.gps))
             new_dxyz_clk = np.atleast_2d(pchip(utc_time.gps, 1))
 
@@ -321,6 +322,7 @@ class SatelliteEmitters:
             url=urls, progress_desc="Downloading SP3 Ephemeris"
         )
         files = files if isinstance(files, list) else [files]
+        files = self._select_best_sp3_files(file_paths=files)
 
         valid_sp3_ids = [
             SatelliteEmitters.SUPPORTED_CONSTELLATIONS[c].eph_name
@@ -367,9 +369,6 @@ class SatelliteEmitters:
         return urls
 
     def _build_sp3_urls(self):
-        MAX_FINAL_DELAY = dt.timedelta(days=12)
-        MAX_RAPID_DELAY = dt.timedelta(hours=26)
-
         # compute difference from now and initial sim time
         initial_datetime = self._initial_time.datetime.replace(tzinfo=ZoneInfo("UTC"))
         now = dt.datetime.now(tz=dt.timezone.utc)
@@ -378,17 +377,6 @@ class SatelliteEmitters:
         if difference < dt.timedelta(days=1):
             raise ValueError(
                 f"The selected time must be at least one day before current date ({now.isoformat()}) for GNSS."
-            )
-
-        # check if BeiDou and QZSS are possible with selected initial_datetime
-        has_beidou_or_qzss = any(
-            c in self._sp3_constellations for c in ["beidou", "qzss"]
-        )
-        if has_beidou_or_qzss and difference <= MAX_FINAL_DELAY:
-            cutoff_date = (now - MAX_FINAL_DELAY).isoformat()
-            raise ValueError(
-                f"BeiDou and QZSS are not supported for ESA rapid or ultra-rapid SP3 products.\n"
-                f"Remove these constellations or change the date to {cutoff_date} or before."
             )
 
         # select multiple days to interpolate across
@@ -412,15 +400,17 @@ class SatelliteEmitters:
             )
 
             # select final, rapid, or ultra rapid product url based on selected initial_datetime
-            if difference > MAX_FINAL_DELAY:
-                file_name = f"ESA0MGNFIN_{year}{day}0000_01D_05M_ORB.SP3"
-            elif difference > MAX_RAPID_DELAY:
-                file_name = f"ESA0OPSRAP_{year}{day}0000_01D_05M_ORB.SP3"
-            else:
-                file_name = f"ESA0OPSULT_{year}{day}0000_02D_05M_ORB.SP3"
+            file_names = [
+                f"ESA0MGNFIN_{year}{day}0000_01D_05M_ORB.SP3",  # final
+                f"ESA0OPSRAP_{year}{day}0000_01D_05M_ORB.SP3",  # rapid
+                f"ESA0OPSULT_{year}{day}0000_02D_05M_ORB.SP3",  # ultra rapid
+            ]
 
-            url = f"http://navigation-office.esa.int/products/gnss-products/{gps_week}/{file_name}.gz"
-            urls.append(url)
+            time_urls = [
+                f"http://navigation-office.esa.int/products/gnss-products/{gps_week}/{file_name}.gz"
+                for file_name in file_names
+            ]
+            urls.extend(time_urls)
 
         return urls
 
@@ -456,3 +446,64 @@ class SatelliteEmitters:
             new_emitters[emitter_id] = (emitter_pos, emitter_vel)
 
         self._emitters = new_emitters
+
+    def _select_best_sp3_files(self, file_paths: list):
+        MAX_FINAL_DELAY = dt.timedelta(days=12)
+
+        # define priority order (lower number = higher priority)
+        priority_map = {"FIN": 1, "RAP": 2, "ULT": 3}
+
+        # group files by date
+        date_groups = defaultdict(list)
+
+        for file_path in file_paths:
+            filename = file_path.name
+
+            # extract date from filename (assuming format: ESA0MGN{TYPE}_{DATE}_...)
+            # pattern matches the date part: 20251900000, 20251910000, etc.
+            date_match = re.search(r"_(\d{11})_", filename)
+            if not date_match:
+                continue
+
+            date = date_match.group(1)
+
+            # extract file type (FIN, RAP, ULT)
+            type_match = re.search(r"ESA0\w*(FIN|RAP|ULT)", filename)
+            if not type_match:
+                continue
+
+            file_type = type_match.group(1)
+
+            date_groups[date].append(
+                {
+                    "path": file_path,
+                    "type": file_type,
+                    "priority": priority_map.get(file_type, 999),
+                }
+            )
+
+        # check if Galileo, BeiDou, and QZSS are possible with selected initial_datetime
+        has_final_cnst = any(
+            c in self._sp3_constellations for c in ["galileo", "beidou", "qzss"]
+        )
+
+        # select best file for each date
+        selected_files = []
+        for date, files in date_groups.items():
+            # sort by priority (lower number = higher priority)
+            best_file = min(files, key=lambda x: x["priority"])
+
+            if has_final_cnst and best_file["type"] != "FIN":
+                now = dt.datetime.now(tz=dt.timezone.utc)
+                cutoff_date = (now - MAX_FINAL_DELAY).isoformat()
+                raise ValueError(
+                    f"Galileo, BeiDou, QZSS are not supported for ESA rapid or ultra-rapid SP3 products.\n"
+                    f"Remove these constellations or change the date to at least {cutoff_date} to guarantee their inclusion."
+                )
+
+            selected_files.append(best_file["path"])
+
+        # sort by date for consistent output
+        selected_files.sort(key=lambda x: re.search(r"_(\d{11})_", x.name).group(1))
+
+        return selected_files
