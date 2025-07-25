@@ -1,19 +1,14 @@
-import numpy as np
 import pathlib as pl
-
-import requests
-
-from navtools.io import FileDownloader
-
-
 import re
-import numpy as np
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import List, Optional
-import pandas as pd
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import requests
+from navtools.io import FileDownloader
 
 
 @dataclass
@@ -216,9 +211,10 @@ class ITCEphemerisParser:
 
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 import aiohttp
 import numpy as np
-from concurrent.futures import ThreadPoolExecutor
 
 
 async def fetch_files_async(files, api_url, max_concurrent=20):
@@ -257,13 +253,11 @@ async def fetch_files_async(files, api_url, max_concurrent=20):
 # pos_cov_per_file = await process_files_concurrent(lines, api_url, parser)
 
 
-import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize, curve_fit
-from scipy.stats import norm
+import numpy as np
 import pandas as pd
-
-
+from scipy.optimize import curve_fit, minimize
+from scipy.stats import norm
 
 
 # Example usage

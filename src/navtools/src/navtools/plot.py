@@ -1,9 +1,11 @@
-import plotly.graph_objects as go
-import numpy as np
-import seaborn as sns
 import itertools
 from dataclasses import dataclass
+
+import numpy as np
+import plotly.graph_objects as go
+import seaborn as sns
 from numpy.typing import ArrayLike
+
 from navtools.geodesy import great_circle_distance
 
 
