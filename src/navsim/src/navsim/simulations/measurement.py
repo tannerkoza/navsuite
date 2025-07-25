@@ -243,7 +243,7 @@ class MeasurementSimulation:
                 emitter_cd = np.zeros_like(timestamps)
 
                 # package emitter data into aspn type
-                system = self._get_emitter_constellation(emitter_id=emitter_id)
+                system = self._emitters.get_constellation(emitter_id=emitter_id)
                 aspn_satnav_sv_data = _create_aspn_satnav_sv_data(
                     timestamps=timestamps,
                     prn=emitter_id,
@@ -259,7 +259,8 @@ class MeasurementSimulation:
                 aspn_satnav_sv_data[view_status == False] = None
 
                 # compute signal-based errors
-                constellation = self._get_emitter_constellation(emitter_id=emitter_id)
+                constellation = self._emitters.get_constellation(emitter_id=emitter_id)
+
                 signals = self._signals[constellation]
 
                 for signal_name, signal in signals.items():
@@ -627,7 +628,7 @@ class MeasurementSimulation:
     def _compute_visibility(
         self, emitter_id: str, rx_pos: ArrayLike, emitter_pos: ArrayLike
     ):
-        constellation = self._get_emitter_constellation(emitter_id=emitter_id)
+        constellation = self._emitters.get_constellation(emitter_id=emitter_id)
 
         # determine constellation mask angle
         mask_angle = self._mask_angles[constellation]
@@ -640,17 +641,6 @@ class MeasurementSimulation:
         )
 
         return status, az, el
-
-    def _get_emitter_constellation(self, emitter_id: str):
-        constellation = next(
-            (
-                c
-                for c, eph_name in self._eph_names.items()
-                if emitter_id.startswith(eph_name)
-            )
-        )
-
-        return constellation
 
     def _filter_emitters(self, emitters: dict, rx_pos: ArrayLike):
         timesteps_visible = []
