@@ -5,13 +5,12 @@ from dataclasses import dataclass
 import numpy as np
 import pyvista as pv
 import seaborn as sns
-from numpy.typing import ArrayLike, NDArray
-from pyvista import examples
-
 from navsim.emitters import SatelliteEmitters
 from navtools.conversions import ecef2geodetic, geodetic2ecef
 from navtools.geodesy import GeodeticDatum
 from navtools.utils import find_axis, ragged_to_array
+from numpy.typing import ArrayLike, NDArray
+from pyvista import examples
 
 
 @dataclass
@@ -39,7 +38,6 @@ def plot_satellites(
     title: str | None = None,
     color_palette: str = "gist_ncar",
 ):
-
     # define pyvista Earth parameters
     earth_radius = datum.r0  # equatorial radius [m]
 
