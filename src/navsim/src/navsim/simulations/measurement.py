@@ -29,13 +29,11 @@ from aspn23_lcm import (
     measurement_position_to_lcm,
     measurement_velocity_to_lcm,
 )
-from navgnss.los import compute_range_and_uv, compute_range_rate, compute_visibility
-from navgnss.signals import SATELLITE_SIGNALS
-from navtools.constants import EARTH_RATE, SPEED_OF_LIGHT
-from navtools.conversions import datetime2gps, ecef2geodetic
 from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
+from navgnss.los import compute_range_and_uv, compute_range_rate, compute_visibility
+from navgnss.signals import SATELLITE_SIGNALS
 from navsim.channel import (
     compute_carrier_to_noise,
     compute_klobuchar_delay,
@@ -45,6 +43,8 @@ from navsim.clock import NAVIGATION_CLOCKS, compute_clock_states
 from navsim.emitters import SatelliteEmitters
 from navsim.rx import compute_dll_sigma, compute_fll_sigma, compute_pll_sigma
 from navsim.simulations import MeasurementConfiguration
+from navtools.constants import EARTH_RATE, SPEED_OF_LIGHT
+from navtools.conversions import datetime2gps, ecef2geodetic
 
 
 class MeasurementSimulation:
@@ -185,6 +185,8 @@ class MeasurementSimulation:
                 desc_update = f"Simulating Measurements (Sim. Time: {sim_time:.3f} [s])"
                 progress_bar.desc = desc_update
                 progress_bar.update()
+
+        print(f"Measurement LCM log saved to: {log_path.absolute()}")
 
     def _process(self):
         niterations = len(self._datetimes)
