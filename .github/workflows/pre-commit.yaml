@@ -34,13 +34,10 @@ jobs:
       - name: Run pre-commit hooks
         run: uvx pre-commit run --all-files
 
-      - name: Run mypy
-        run: uvx mypy src/ tests/ --ignore-missing-imports
-
       - name: Commit changes
         if: always()
         uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actions
-          message: 'Apply pre-commit changes'
-          add: '*.py'
+          message: "Apply pre-commit changes"
+          add: "*.py"

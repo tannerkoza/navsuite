@@ -115,14 +115,13 @@ class ENU(NamedTuple):
     up: float | np.ndarray
 
 
-# earth-centered earth-fixed (ECEF)
 def ecef2geodetic(
     x: float | np.ndarray,
     y: float | np.ndarray,
     z: float | np.ndarray,
     datum: GeodeticDatum = GeodeticDatum.from_datum(datum_name="wgs84"),
 ) -> GEODETIC:
-    """Borkowski closed-form cartesian to curvilinear conversion (Groves 2013).
+    """Olson's closed-form ECEF to geodetic conversion (IEEE Trans. 1996).
 
     Parameters
     ----------
@@ -154,27 +153,101 @@ def ecef2geodetic(
     >>> geod.lon.tolist()
     [0.0, 1.5707963267948966]
     """
-    k1 = np.sqrt(1 - datum.eccentricity**2) * np.abs(z)
-    k2 = datum.eccentricity**2 * datum.r0
-    beta = np.sqrt(x**2 + y**2)  # Eq. C.18
+    # Datum parameters
+    a = datum.r0
+    e2 = datum.eccentricity**2
 
-    E = (k1 - k2) / beta  # Eq. C.29
-    F = (k1 + k2) / beta  # Eq. C.30
+    # Precomputed constants for efficiency (as in original Olson C code)
+    a1 = a * e2
+    a2 = a1 * a1
+    a3 = a1 * e2 / 2
+    a4 = 2.5 * a2
+    a5 = a1 + a3
+    a6 = 1 - e2
 
-    P = 4 / 3 * (E * F + 1)  # Eq. C.31
-    Q = 2 * (E**2 - F**2)  # Eq. C.32
-    D = P**3 + Q**2  # Eq. C.33
-    V = (np.sqrt(D) - Q) ** (1 / 3) - (np.sqrt(D) + Q) ** (1 / 3)  # Eq. C.34
-    G = 0.5 * (np.sqrt(E**2 + V) + E)  # Eq. C.35
-    T = np.sqrt(G**2 + (F - V * G) / (2 * G - E)) - G  # Eq. C.36
+    # Basic coordinate calculations
+    zp = np.abs(z)
+    w2 = x**2 + y**2
+    w = np.sqrt(w2)
+    z2 = z**2
+    r2 = w2 + z2
+    r = np.sqrt(r2)
 
-    lat = np.sign(z) * np.arctan(
-        (1 - T**2) / (2 * T * np.sqrt(1 - datum.eccentricity**2))
-    )  # Eq. C.37
+    # Handle points too close to origin
+    near_origin = r < 100000.0
+
+    # Longitude calculation (valid everywhere except origin)
     lon = np.arctan2(y, x)
-    alt = (beta - datum.r0 * T) * np.cos(lat) + (
-        z - np.sign(z) * datum.r0 * np.sqrt(1 - datum.eccentricity**2)
-    ) * np.sin(lat)  # Eq. C.38
+
+    # Initialize latitude and altitude
+    lat = np.where(near_origin, 0.0, np.nan)
+    alt = np.where(near_origin, -1.0e7, np.nan)
+
+    # Process points far enough from origin
+    valid = ~near_origin
+    if np.any(valid):
+        # Extract valid coordinates for vectorized operations
+        r_v = np.where(valid, r, 1.0)  # Avoid division by zero
+        w2_v = np.where(valid, w2, 0.0)
+        z2_v = np.where(valid, z2, 0.0)
+        r2_v = np.where(valid, r2, 1.0)
+
+        # Normalized coordinates
+        s2 = z2_v / r2_v
+        c2 = w2_v / r2_v
+
+        # Olson's auxiliary variables
+        u = a2 / r_v
+        v = a3 - a4 / r_v
+
+        # Branch based on c2 value for numerical stability
+        high_c2 = valid & (c2 > 0.3)
+        low_c2 = valid & (c2 <= 0.3)
+
+        # High c2 branch: use sine formulation
+        if np.any(high_c2):
+            s = (zp / r) * (1.0 + c2 * (a1 + u + s2 * v) / r)
+            lat_temp = np.arcsin(s)
+            ss = s**2
+            c = np.sqrt(1.0 - ss)
+
+            lat = np.where(high_c2, lat_temp, lat)
+            s_out = np.where(high_c2, s, 0.0)
+            c_out = np.where(high_c2, c, 0.0)
+            ss_out = np.where(high_c2, ss, 0.0)
+        else:
+            s_out = np.zeros_like(r)
+            c_out = np.zeros_like(r)
+            ss_out = np.zeros_like(r)
+
+        # Low c2 branch: use cosine formulation
+        if np.any(low_c2):
+            c = (w / r) * (1.0 - s2 * (a5 - u - c2 * v) / r)
+            lat_temp = np.arccos(c)
+            ss = 1.0 - c**2
+            s = np.sqrt(ss)
+
+            lat = np.where(low_c2, lat_temp, lat)
+            s_out = np.where(low_c2, s, s_out)
+            c_out = np.where(low_c2, c, c_out)
+            ss_out = np.where(low_c2, ss, ss_out)
+
+        # final geodetic calculations
+        g = 1.0 - e2 * ss_out
+        rg = a / np.sqrt(g)
+        rf = a6 * rg
+        u_final = w - rg * c_out
+        v_final = zp - rf * s_out
+        f = c_out * u_final + s_out * v_final
+        m = c_out * v_final - s_out * u_final
+        p = m / (rf / g + f)
+
+        # Update latitude and calculate altitude
+        lat = np.where(valid, lat + p, lat)
+        alt = np.where(valid, f + m * p / 2.0, alt)
+
+    # Handle negative z coordinates
+    lat = np.where(z < 0.0, -lat, lat)
 
     return GEODETIC(lat=lat, lon=lon, alt=alt)
 
