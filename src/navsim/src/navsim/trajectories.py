@@ -1,10 +1,10 @@
 import numpy as np
+from navtools.conversions import enu2geodetic, geodetic2ecef, geodetic2enu
+from navtools.conversions.coordinates import ECEF, GEODETIC
 from numpy.typing import ArrayLike, NDArray
 from scipy.interpolate import CubicSpline, PchipInterpolator
 
 from navsim.io import PACKAGE_PATH
-from navtools.conversions import enu2geodetic, geodetic2ecef, geodetic2enu
-from navtools.conversions.coordinates import ECEF, GEODETIC
 
 
 def load_sample_trajectory(
