@@ -1,7 +1,9 @@
-__all__ = ["simulate"]
+__all__ = ["simulate", "main"]
 
+import argparse
 import datetime as dt
 import pathlib as pl
+from typing import Optional
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -11,18 +13,53 @@ from navsim.simulations import MeasurementSimulation, load_configuration
 from navsim.trajectories import interpolate_trajectory, load_sample_trajectory
 
 
-def simulate():
+def simulate(config_dir: Optional[pl.Path] = None, log_dir: Optional[pl.Path] = None):
     """
-    Run a satellite navigation simulation and save results to an LCM log file.
+    Run a full satellite navigation simulation and write results to an LCM log.
 
-    This function loads the simulation configuration, generates time series
-    and trajectory, then runs the measurement simulation and writes
-    output to an LCM log.
+    Loads configuration files, generates timelines, interpolates trajectories,
+    and runs the measurement simulation. Results are output in an LCM log file
+    in a timestamped subdirectory.
+
+    Parameters
+    ----------
+    config_dir : pathlib.Path or None
+        Directory containing configuration files. If None, uses the default
+        path `navsim.io.CONFIG_PATH`.
+    log_dir : pathlib.Path or None
+        Directory to write output log files. If None, defaults to `LOG_PATH`
+        defined in `navsim.io`.
+
+    Raises
+    ------
+    FileNotFoundError
+        If required configuration files are missing in `config_dir`.
+    PermissionError
+        If log directory cannot be created or written to.
+
+    Examples
+    --------
+    >>> simulate(config_dir=Path("cfg"), log_dir=Path("logs"))
     """
+    # use provided config directory and log directory or fall back to default
+    if config_dir is None:
+        config_dir = CONFIG_PATH
+    else:
+        config_dir = pl.Path(config_dir)
+
+    if log_dir is None:
+        log_dir = LOG_PATH
+    else:
+        log_dir = pl.Path(log_dir)
+
+    log_dir.mkdir(parents=True, exist_ok=True)
+
     # load configuration and create output LCM log path
-    config_path, config = load_configuration(dir=CONFIG_PATH)
+    config_path, config = load_configuration(dir=config_dir)
     lcm_log_path = create_lcm_log_path(
-        initial_datetime=config.general.initial_datetime, config_path=config_path
+        initial_datetime=config.general.initial_datetime,
+        config_path=config_path,
+        log_dir=log_dir,
     )
 
     # create elapsed timeseries and timestamps
@@ -48,7 +85,9 @@ def simulate():
     )
 
 
-def create_lcm_log_path(initial_datetime: dt.datetime, config_path: pl.Path) -> pl.Path:
+def create_lcm_log_path(
+    initial_datetime: dt.datetime, config_path: pl.Path, log_dir: pl.Path
+) -> pl.Path:
     """
     Create a timestamped LCM log filename based on the initial datetime.
 
@@ -76,7 +115,7 @@ def create_lcm_log_path(initial_datetime: dt.datetime, config_path: pl.Path) -> 
     log_name = (
         f"{initial_datetime.strftime('%Y-%m-%d_%H:%M:%SZ')}_{config_path.stem}.log"
     )
-    lcm_log_path = LOG_PATH / log_name
+    lcm_log_path = log_dir / log_name
     return lcm_log_path
 
 
@@ -173,5 +212,31 @@ def create_trajectory(
     return rx_pos, rx_vel
 
 
+def main():
+    """
+    Command-line entry point for the navsim simulation.
+    """
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Run a satellite navigation simulation",
+    )
+    parser.add_argument(
+        "--config-dir",
+        type=pl.Path,
+        help="Directory containing configuration files (default: uses package default)",
+    )
+    parser.add_argument(
+        "--log-dir",
+        type=pl.Path,
+        help=(
+            "Directory to write log files to (default):\n"
+            "  • Linux/macOS: ~/.navsim/logs/\n"
+            "  • Windows:     C:\\Users\\<user>\\.navsim\\logs/"
+        ),
+    )
+    args = parser.parse_args()
+    simulate(config_dir=args.config_dir, log_dir=args.log_dir)
+
+
 if __name__ == "__main__":
-    simulate()
+    main()
