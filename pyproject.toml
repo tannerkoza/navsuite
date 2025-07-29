@@ -35,6 +35,7 @@ dev = [
     "snakeviz>=2.2.2",
     "matplotlib>=3.10.3",
     "pyqt6>=6.9.1",
+    "junit2html>=31.0.2",
 ]
 
 [[tool.mypy.overrides]]
