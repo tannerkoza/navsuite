@@ -23,7 +23,7 @@ build-backend = "hatchling.build"
 navsim = "navsim:main"
 
 [tool.setuptools.package-data]
-navsim = ["config/*"]
+navsim = ["config/*", "trajectories/*"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
