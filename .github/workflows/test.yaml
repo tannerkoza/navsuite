@@ -30,7 +30,8 @@ jobs:
         run: uv run pytest tests --doctest-modules --junitxml=junit/test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml
 
       - uses: actions/upload-artifact@v4
+        name: Upload test results
         if: ${{ always() }}
         with:
           name: junit-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: junit/test-results.xml
+          path: junit/test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml
