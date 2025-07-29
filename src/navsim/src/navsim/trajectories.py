@@ -1,10 +1,10 @@
 import numpy as np
-from navtools.conversions import enu2geodetic, geodetic2ecef, geodetic2enu
-from navtools.conversions.coordinates import ECEF, GEODETIC
 from numpy.typing import ArrayLike, NDArray
 from scipy.interpolate import CubicSpline, PchipInterpolator
 
-from navsim.io import PROJECT_PATH
+from navsim.io import PACKAGE_PATH
+from navtools.conversions import enu2geodetic, geodetic2ecef, geodetic2enu
+from navtools.conversions.coordinates import ECEF, GEODETIC
 
 
 def load_sample_trajectory(
@@ -13,7 +13,7 @@ def load_sample_trajectory(
     NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
 ]:
     # load sample trajectory file
-    file_path = PROJECT_PATH / "trajectories" / trajectory_name
+    file_path = PACKAGE_PATH / "trajectories" / trajectory_name
     data = np.loadtxt(fname=file_path.with_suffix(".csv"), delimiter=",", skiprows=1)
 
     # extract relevant data
