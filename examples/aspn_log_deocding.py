@@ -1,6 +1,5 @@
 import lcm
 import numpy as np
-
 from navtools.aspn import AspnDecoderLcm
 
 LOG_PATH = "/home/tkoza/Devel/utils/navsuite/src/navsim/logs/2024-06-14_00:00:00Z_example_galileo-iridium.log"
@@ -13,7 +12,6 @@ log = lcm.EventLog(path=LOG_PATH)
 decoder = AspnDecoderLcm()
 
 for event in log:
-
     if event.channel == SATNAV_CHANNEL:
         standard, data = decoder.decode(msg=event)
 
