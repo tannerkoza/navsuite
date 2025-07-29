@@ -1,12 +1,11 @@
-import numpy as np
-from pytest import approx
-
 import navtools.conversions as ntc
+import numpy as np
 from navtools.geodesy import GEODETIC_DATUMS
+from pytest import approx
 
 
 def test_ecef_conversions():
-    WGS84 = GEODETIC_DATUMS["wgs84"]    
+    WGS84 = GEODETIC_DATUMS["wgs84"]
 
     lla = np.array(ntc.ecef2geodetic(x=WGS84.r0, y=0.0, z=0.0))
     assert lla == approx(np.zeros(3), rel=1e-9)
