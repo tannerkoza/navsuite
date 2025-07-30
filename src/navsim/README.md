@@ -44,7 +44,6 @@ Python **3.10-3.12** are currently supported and tested against using the [`<ubu
 navsim can be installed directly from the navsuite repository:
 
 ```bash
-# Install navsim package from navsuite
 pip install "navsim @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navsim"
 ```
 
