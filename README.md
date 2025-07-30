@@ -46,7 +46,7 @@ Python **3.10-3.12** are currently supported and tested against using the [`<ubu
 Currently, there are no stable releases of any package included in ***navsuite***. Therefore, there are no wheels readily available for download from any package index repository. However, each package can still be installed using the following command prototype:
 
 ```sh
-pip install "git+https://github.com/tannerkoza/navsuite.git#egg=<package>&subdirectory=src/<package>"
+pip install "<package> @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/<package>"
 ```
 In this command, `<package>` can simply be replaced by one of the package names in the `src/` directory (e.g., `navtools`). Additionally, these packages can be installed with any [PEP 517](https://peps.python.org/pep-0517/) compatible build system (in addition to `pip`) and their alternative to the above command.
 
