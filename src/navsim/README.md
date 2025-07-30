@@ -102,6 +102,8 @@ navsim --config-dir /path/to/config --log-dir /path/to/logs
 
 ```
 
+The configuration for the simulation provided by the executable is explained in the [simulation instructions](/src/navsim/SIMULATION.md). A complete configuration file example is provided so you can create your own in another directory and source them with the `--config-dir` argument.
+
 #### Command-Line Options
 
 - `--config-dir`: Directory containing configuration files (optional)

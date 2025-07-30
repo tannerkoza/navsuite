@@ -18,10 +18,10 @@ This guide explains how to configure navigation simulations using the navsim con
 
 1. Create a TOML configuration file in `src/navsim/config` (e.g., `my_simulation.toml`)
 2. Define your simulation parameters using the structure described below
-3. Run the simulation script `src/navsim/scripts/simulation.py`:
+3. Run the navsim executable (with optional arguments):
 
 ```shell
-python3 simulation.py
+navsim
 ```
 
 ## Configuration File Structure
