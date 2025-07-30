@@ -1,0 +1,27 @@
+# General
+initial_datetime = 2024-06-14T00:00:00-00:00
+duration = 7200                              # [s]
+fsim = 1                                     # [Hz]
+trajectory_name = "road_japan_sdx_01s_onego"
+output_log_path = true
+
+# Errors
+rx_clock_type = "ocxo"
+rx_noise = true
+ionosphere = true
+troposphere = false
+
+
+[[constellation]]
+reference_constellation = "gps"
+signals = ["galileo_l1b"]
+mask_angle = 10                 # [deg]
+transmit_eirp = 29.5            # [dBW]
+cn0_attenuation = 20            # [dB]
+
+[[constellation]]
+reference_constellation = "globalstar"
+signals = ["iridium_l"]
+mask_angle = 30                        # [deg]
+transmit_eirp = 45.0                   # [dBW]
+cn0_attenuation = 20                   # [dB]

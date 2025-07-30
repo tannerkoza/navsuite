@@ -186,6 +186,8 @@ class MeasurementSimulation:
                 progress_bar.desc = desc_update
                 progress_bar.update()
 
+        print(f"Measurement LCM log saved to: {log_path.absolute()}")
+
     def _process(self):
         niterations = len(self._datetimes)
 
@@ -317,7 +319,7 @@ class MeasurementSimulation:
                         -noiseless_prange_rate * signal.fcarrier / SPEED_OF_LIGHT
                     )
                     carrier_phase = np.cumsum(noiseless_doppler) + pll_noise
-                    lock_count = np.arange(0, carrier_phase.size)
+                    lock_count = np.arange(0, carrier_phase.size).tolist()
 
                     # package observable data in aspn type
                     aspn_satnav_obs = _create_aspn_satnav_obs(
@@ -334,8 +336,10 @@ class MeasurementSimulation:
                         carrier_phase_variance=pll_sigma**2,
                         c_n0=cn0,
                         lock_count=lock_count,
-                        iono_correction_applied=np.logical_not(self._ionosphere),
-                        tropo_correction_applied=np.logical_not(self._troposphere),
+                        iono_correction_applied=np.logical_not(self._ionosphere).item(),
+                        tropo_correction_applied=np.logical_not(
+                            self._troposphere
+                        ).item(),
                     )
 
                     # filter by view status
