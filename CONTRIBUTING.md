@@ -1,6 +1,6 @@
-# NavSuite Development Setup with UV
+# navsuite Development Setup with UV
 
-This guide walks you through setting up the NavSuite monorepo for development using UV, a fast Python package manager. NavSuite is a collection of navigation-related Python packages designed for positioning, navigation, and timing (PNT) research and development.
+This guide walks you through setting up the navsuite monorepo for development using UV, a fast Python package manager. navsuite is a collection of navigation-related Python packages designed for positioning, navigation, and timing (PNT) research and development.
 
 ## Prerequisites
 
@@ -33,7 +33,7 @@ cd navsuite
 
 ### 2. Initialize the Development Environment
 
-NavSuite uses a monorepo structure with packages located in the `src/` directory. Use UV to set up the development environment:
+navsuite uses a monorepo structure with packages located in the `src/` directory. Use UV to set up the development environment:
 
 ```bash
 # Initialize a virtual environment and sync dependencies
@@ -197,7 +197,7 @@ uv sync
 
 ## Summary Commands
 
-Here are the most commonly used commands for NavSuite development:
+Here are the most commonly used commands for navsuite development:
 
 ```bash
 # Initial setup
@@ -217,4 +217,4 @@ uv tree                        # Show dependency tree
 uv pip list                    # List installed packages
 ```
 
-This setup provides a robust development environment for contributing to any of the packages in the NavSuite monorepo while maintaining proper dependency isolation and management.
+This setup provides a robust development environment for contributing to any of the packages in the navsuite monorepo while maintaining proper dependency isolation and management.
