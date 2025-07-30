@@ -119,24 +119,6 @@ The executable generates:
 - **Naming convention**: `YYYY-MM-DD_HH:MM:SSZ_<config_name>.log`
 - **Location**: Specified log directory or platform default
 
-## Project Structure
-
-navsim is organized within the larger navsuite project:
-
-```
-navsuite/
-├── src/
-│   ├── navsim/           # navsim package
-│   │   ├── __main__.py   # Command-line entry point
-│   │   ├── io/           # Configuration and file I/O
-│   │   ├── simulations/  # Core simulation classes
-│   │   └── trajectories/ # Trajectory loading and interpolation
-│   ├── navtools/         # Other navigation tools
-│   └── [other packages]  # Additional PNT tools
-├── CONTRIBUTING.md       # Contribution guidelines
-└── README.md            # Project overview
-```
-
 ## Development Status
 
 🚧 **Early Development**: navsim is in active development with features being added on an "as-needed" basis.
