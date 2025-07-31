@@ -8,7 +8,9 @@
 -e ./src/navplot
     # via navsuite
 -e ./src/navsim
-    # via navsuite
+    # via
+    #   navplot
+    #   navsuite
 -e ./src/navtools
     # via
     #   navgnss
