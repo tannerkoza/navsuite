@@ -1,21 +1,22 @@
 # General
-initial_datetime=2024-06-14T00:00:00-00:00
-duration=7200 # [s]
-fsim=1 # [Hz]
-trajectory_name="road_finland_sdx_01_onego"
-output_log_path=true
+initial_datetime = 2024-06-14T00:00:00-00:00
+duration = 7200                               # [s]
+fsim = 1                                      # [Hz]
+trajectory_name = "road_finland_sdx_01_onego"
+is_static = true
 
 # Errors
 rx_clock_type = "ocxo"
 rx_noise = true
 ionosphere = true
 troposphere = false
-
+pseudorange_awgn_sigma = 5.0   # [m]
+doppler_awgn_sigma = 2.0       # [Hz]
+carrier_phase_awgn_sigma = 0.2 # [cycles]
 
 [[constellation]]
-reference_constellation="gps"
-signals=["gps_l1c"]
-mask_angle=10 # [deg]
-transmit_eirp=29.5 # [dBW]
-cn0_attenuation=20 # [dB]
-
+reference_constellation = "gps"
+signals = ["gps_l1c"]
+mask_angle = 10                 # [deg]
+transmit_eirp = 29.5            # [dBW]
+cn0_attenuation = 20            # [dB]

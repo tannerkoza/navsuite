@@ -81,6 +81,12 @@ class MeasurementConfiguration:
     troposphere : bool
         Whether to model tropospheric delay effects in the simulation.
         If True, tropospheric corrections will be applied to measurements.
+    pseudorange_awgn_sigma : float
+        Adds user-defined additive white Gaussian noise to pseduoranges using 1-σ value in meters. Default value is 0.0.
+    doppler_awgn_sigma : float
+        Adds user-defined additive white Gaussian noise to Doppler using 1-σ value in Hz. Default value is 0.0.
+    carrier_phase_awgn_sigma : float
+        Adds user-defined additive white Gaussian noise to carrier phase using 1-σ value in cycles. Default value is 0.0.
 
     Examples
     --------
@@ -99,6 +105,9 @@ class MeasurementConfiguration:
     rx_noise: bool
     ionosphere: bool
     troposphere: bool
+    pseudorange_awgn_sigma: float = 0.0  # [m]
+    doppler_awgn_sigma: float = 0.0  # [Hz]
+    carrier_phase_awgn_sigma: float = 0.0  # [cycles]
 
 
 @dataclass
@@ -123,6 +132,8 @@ class GeneralConfiguration:
     trajectory_name : str
         Name identifier of the trajectory to simulate. This should correspond
         to a trajectory definition available in the navsim `trajectories` folder.
+    is_static : bool
+        Determines whether the entire duration is static at the first point in the selected trajectory. Default value is False.
 
     Examples
     --------
@@ -139,6 +150,7 @@ class GeneralConfiguration:
     duration: float
     fsim: float
     trajectory_name: str
+    is_static: bool = False
 
 
 @dataclass

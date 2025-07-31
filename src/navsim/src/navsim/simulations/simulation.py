@@ -73,6 +73,7 @@ def simulate(config_dir: Optional[pl.Path] = None, log_dir: Optional[pl.Path] = 
     rx_pos, rx_vel = create_trajectory(
         trajectory_name=config.general.trajectory_name,
         sim_timeseries=sim_timeseries,
+        is_static=config.general.is_static,
     )
 
     # create simulation and begin
@@ -159,8 +160,7 @@ def generate_timeseries(
 
 
 def create_trajectory(
-    trajectory_name: str,
-    sim_timeseries: ArrayLike,
+    trajectory_name: str, sim_timeseries: ArrayLike, is_static: bool
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
     Load and interpolate a predefined trajectory to simulation times.
@@ -171,6 +171,8 @@ def create_trajectory(
         Name of the sample trajectory to load.
     sim_timeseries : array-like of float
         Elapsed simulation times at which to interpolate.
+    is_static : bool
+        Determines whether the entire duration is static at the first point in the selected trajectory.
 
     Returns
     -------
@@ -187,6 +189,11 @@ def create_trajectory(
     traj_timeseries, traj_lat, traj_lon, traj_alt = load_sample_trajectory(
         trajectory_name=trajectory_name
     )
+
+    if is_static:
+        traj_lat = np.repeat(traj_lat[0], traj_timeseries.size)
+        traj_lon = np.repeat(traj_lon[0], traj_timeseries.size)
+        traj_alt = np.repeat(traj_alt[0], traj_timeseries.size)
 
     rx_pos_ecef, rx_vel_ecef = interpolate_trajectory(
         time=traj_timeseries,
