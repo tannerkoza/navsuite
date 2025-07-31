@@ -34,7 +34,6 @@ dev = [
     "pytest-cov>=5.0.0",
     "snakeviz>=2.2.2",
     "matplotlib>=3.10.3",
-    "pyqt6>=6.9.1",
     "junit2html>=31.0.2",
 ]
 

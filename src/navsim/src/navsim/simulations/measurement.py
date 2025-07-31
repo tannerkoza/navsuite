@@ -43,7 +43,7 @@ from navsim.channel import (
 )
 from navsim.clock import NAVIGATION_CLOCKS, compute_clock_states
 from navsim.emitters import SatelliteEmitters
-from navsim.rx import compute_dll_sigma, compute_fll_sigma, compute_pll_sigma
+from navsim.receiver import compute_dll_sigma, compute_fll_sigma, compute_pll_sigma
 from navsim.simulations import MeasurementConfiguration
 
 
