@@ -297,6 +297,9 @@ class MeasurementSimulation:
                     ) = self._compute_rx_noise(cn0=cn0, fcarrier=signal.fcarrier)
 
                     # compute pseudorange
+                    user_prange_noise = self._prange_awgn_sigma * np.random.randn(
+                        timestamps.size
+                    )
                     prange = (
                         los_range
                         + iono_delays
@@ -304,6 +307,7 @@ class MeasurementSimulation:
                         + rx_cb
                         - emitter_cb
                         + dll_noise
+                        + user_prange_noise
                     )
 
                     # compute doppler
@@ -311,14 +315,24 @@ class MeasurementSimulation:
                         los_range_rate - iono_drifts + tropo_drifts + rx_cd - emitter_cd
                     )
                     prange_rate = noiseless_prange_rate + fll_noise
-                    doppler = -prange_rate * signal.fcarrier / SPEED_OF_LIGHT
+                    user_doppler_noise = self._doppler_awgn_sigma * np.random.randn(
+                        timestamps.size
+                    )
+                    doppler = (
+                        -prange_rate * signal.fcarrier / SPEED_OF_LIGHT
+                    ) + user_doppler_noise
 
                     # compute carrier phase
+                    user_phase_noise = self._carrier_phase_awgn_sigma * np.random.randn(
+                        timestamps.size
+                    )
                     # #TODO: figure out timing and correct calculation
                     noiseless_doppler = (
                         -noiseless_prange_rate * signal.fcarrier / SPEED_OF_LIGHT
                     )
-                    carrier_phase = np.cumsum(noiseless_doppler) + pll_noise
+                    carrier_phase = (
+                        np.cumsum(noiseless_doppler) + pll_noise + user_phase_noise
+                    )
                     lock_count = np.arange(0, carrier_phase.size).tolist()
 
                     # package observable data in aspn type
@@ -458,6 +472,9 @@ class MeasurementSimulation:
         self._troposphere = config.troposphere
         self._rx_noise = config.rx_noise
         self._rx_clock = NAVIGATION_CLOCKS[config.rx_clock_type.casefold()]
+        self._prange_awgn_sigma = config.pseudorange_awgn_sigma
+        self._doppler_awgn_sigma = config.doppler_awgn_sigma
+        self._carrier_phase_awgn_sigma = config.carrier_phase_awgn_sigma
 
         # assing constellation specific
         self._mask_angles = {}
