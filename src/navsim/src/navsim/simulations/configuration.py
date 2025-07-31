@@ -8,9 +8,9 @@ except ImportError:
     import tomli as tl
 
 from typing import Any, Dict, Type, TypeVar
+from zoneinfo import ZoneInfo
 
 from navtools.io import select_file
-from zoneinfo import ZoneInfo
 
 
 @dataclass
@@ -81,6 +81,12 @@ class MeasurementConfiguration:
     troposphere : bool
         Whether to model tropospheric delay effects in the simulation.
         If True, tropospheric corrections will be applied to measurements.
+    pseudorange_awgn_sigma : float
+        Adds user-defined additive white Gaussian noise to pseduoranges using 1-σ value in meters.
+    doppler_awgn_sigma : float
+        Adds user-defined additive white Gaussian noise to Doppler using 1-σ value in Hz.
+    carrier_phase_awgn_sigma : float
+        Adds user-defined additive white Gaussian noise to carrier phase using 1-σ value in cycles.
 
     Examples
     --------
@@ -99,6 +105,9 @@ class MeasurementConfiguration:
     rx_noise: bool
     ionosphere: bool
     troposphere: bool
+    pseudorange_awgn_sigma: float = 0.0  # [m]
+    doppler_awgn_sigma: float = 0.0  # [Hz]
+    carrier_phase_awgn_sigma: float = 0.0  # [cycles]
 
 
 @dataclass
