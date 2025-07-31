@@ -68,6 +68,12 @@ The general section defines the fundamental simulation parameters:
 - **Example**: `"road_finland_sdx_01_onego"`
 - **Notes**: Must correspond to an available trajectory in your simulation system
 
+### `is_static`
+
+- **Type**: Boolean
+- **Description**: Optional ability to set receiver at static at starting position of trajectory defined by `trajectory_name`
+- **Example**: `true`
+
 ## Measurement Configuration
 
 ### Error Modeling Parameters
