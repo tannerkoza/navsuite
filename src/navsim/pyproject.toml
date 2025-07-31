@@ -1,8 +1,10 @@
 [project]
 name = "navsim"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Python satellite navigation simulator package within the navsuite collection of navigation-related tools."
+readme = "README.md"
 authors = [{ name = "Tanner Koza", email = "kozatanner@gmail.com" }]
+requires-python = ">= 3.10"
 dependencies = [
     "navtools @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navtools",
     "navgnss @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navgnss",
@@ -12,8 +14,6 @@ dependencies = [
     "scipy>=1.15.3",
     "tomli>=2.2.1",
 ]
-readme = "README.md"
-requires-python = ">= 3.10"
 
 [build-system]
 requires = ["hatchling"]
@@ -25,8 +25,8 @@ navsim = "navsim:main"
 [tool.setuptools.package-data]
 navsim = ["config/*", "trajectories/*"]
 
-[tool.hatch.metadata]
-allow-direct-references = true
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/navsim"]
+
+[tool.hatch.metadata]
+allow-direct-references = true

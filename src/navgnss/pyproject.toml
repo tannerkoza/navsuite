@@ -1,13 +1,14 @@
 [project]
 name = "navgnss"
 version = "0.1.0"
-description = "Add your description here"
-authors = [
-    { name = "Tanner Koza", email = "kozatanner@gmail.com" }
-]
-dependencies = ["navtools @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navtools"]
+description = "A Python satellite navigation algorithm package within the navsuite collection of navigation-related tools."
 readme = "README.md"
+authors = [{ name = "Tanner Koza", email = "kozatanner@gmail.com" }]
 requires-python = ">= 3.10"
+
+dependencies = [
+    "navtools @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navtools",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -18,4 +19,3 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/navgnss"]
-
