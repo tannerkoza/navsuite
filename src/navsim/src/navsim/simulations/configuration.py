@@ -8,9 +8,9 @@ except ImportError:
     import tomli as tl
 
 from typing import Any, Dict, Type, TypeVar
-from zoneinfo import ZoneInfo
 
 from navtools.io import select_file
+from zoneinfo import ZoneInfo
 
 
 @dataclass
