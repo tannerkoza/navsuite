@@ -22,9 +22,9 @@ aiohttp==3.12.14
     # via navtools
 aiosignal==1.4.0
     # via aiohttp
-aspn23 @ git+https://github.com/tannerkoza/aspn-python.git@b37e924402bbfda756c8270acb990f23aa938ea7#subdirectory=aspn-py
+aspn23 @ git+https://github.com/tannerkoza/aspn-python.git@f2dd2deac227ef206c557a5ec917ad668288068c#subdirectory=aspn-py
     # via navtools
-aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git@b37e924402bbfda756c8270acb990f23aa938ea7#subdirectory=aspn-lcm
+aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git@f2dd2deac227ef206c557a5ec917ad668288068c#subdirectory=aspn-lcm-py
     # via navtools
 astropy==6.1.7 ; python_full_version < '3.11'
     # via navsim
