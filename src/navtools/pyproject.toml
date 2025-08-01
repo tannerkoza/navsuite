@@ -7,8 +7,8 @@ authors = [{ name = "Tanner Koza", email = "kozatanner@gmail.com" }]
 requires-python = ">= 3.10"
 dependencies = [
     "numpy>=2.2.6",
-    "aspn23 @ git+https://github.com/tannerkoza/aspn-python.git@main#subdirectory=aspn-py",
-    "aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git@main#subdirectory=aspn-lcm-py",
+    "aspn23 @ git+https://github.com/tannerkoza/aspn-python.git#subdirectory=aspn-py",
+    "aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git#subdirectory=aspn-lcm-py",
     "prompt-toolkit>=3.0.51",
     "aiohttp>=3.12.14",
 ]
@@ -22,3 +22,6 @@ packages = ["src/navtools"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.uv.sources]
+aspn23-lcm = { git = "https://github.com/tannerkoza/aspn-python.git", subdirectory = "aspn-lcm-py" }

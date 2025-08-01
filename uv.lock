@@ -126,16 +126,16 @@ wheels = [
 
 [[package]]
 name = "aspn23"
-version = "0.0.0"
-source = { git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-py&rev=main#b37e924402bbfda756c8270acb990f23aa938ea7" }
+version = "0.1.0"
+source = { git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-py#f2dd2deac227ef206c557a5ec917ad668288068c" }
 dependencies = [
     { name = "numpy" },
 ]
 
 [[package]]
 name = "aspn23-lcm"
-version = "0.0.0"
-source = { git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-lcm&rev=main#b37e924402bbfda756c8270acb990f23aa938ea7" }
+version = "0.1.0"
+source = { git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-lcm-py#f2dd2deac227ef206c557a5ec917ad668288068c" }
 dependencies = [
     { name = "lcm" },
 ]
@@ -1224,8 +1224,8 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.12.14" },
-    { name = "aspn23", git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-py&rev=main" },
-    { name = "aspn23-lcm", git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-lcm&rev=main" },
+    { name = "aspn23", git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-py" },
+    { name = "aspn23-lcm", git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-lcm-py" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "prompt-toolkit", specifier = ">=3.0.51" },
 ]
