@@ -521,7 +521,7 @@ class MeasurementSimulation:
     def _compute_rx_clock(self, timestamps: list):
         ntimestamps = len(timestamps)
         delta_timestamps = np.diff(timestamps)
-        mean_time_step = np.mean(delta_timestamps).seconds
+        mean_time_step = np.mean(delta_timestamps).total_seconds()
 
         clock_bias, clock_drift = compute_clock_states(
             h0=self._rx_clock.h0,
