@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -1226,7 +1226,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.12.14" },
     { name = "aspn23", git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-py" },
     { name = "aspn23-lcm", git = "https://github.com/tannerkoza/aspn-python.git?subdirectory=aspn-lcm-py" },
-    { name = "numpy" },
+    { name = "numpy", specifier = ">=2.2.6" },
     { name = "prompt-toolkit", specifier = ">=3.0.51" },
 ]
 
