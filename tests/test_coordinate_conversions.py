@@ -2,6 +2,7 @@ from typing import Union
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal
 
 # Assuming the module is imported as:
 from navtools.conversions.coordinates import (
@@ -9,17 +10,16 @@ from navtools.conversions.coordinates import (
     ECI,
     ENU,
     GEODETIC,
-    C_ecef2enu,
-    C_enu2ecef,
     ecef2enu,
+    ecef2enuv,
     ecef2geodetic,
     enu2ecef,
+    enu2ecefv,
     enu2geodetic,
     geodetic2ecef,
     geodetic2enu,
 )
 from navtools.geodesy import GeodeticDatum
-from numpy.testing import assert_allclose, assert_array_almost_equal
 
 
 class TestCoordinateClasses:
@@ -220,26 +220,26 @@ class TestRoundTripConversions:
 class TestECEF2ENU:
     """Test ECEF to ENU conversions."""
 
-    def test_c_ecef2enu_basic(self):
-        """Test basic C_ecef2enu transformation."""
+    def test_ecef2enuv_basic(self):
+        """Test basic ecef2enuv transformation."""
         # At equator, prime meridian, ECEF x-axis points up in ENU
-        enu = C_ecef2enu(1.0, 0.0, 0.0, 0.0, 0.0)
+        enu = ecef2enuv(1.0, 0.0, 0.0, 0.0, 0.0)
         assert_allclose(enu.east, 0.0, atol=1e-15)
         assert_allclose(enu.north, 0.0, atol=1e-15)
         assert_allclose(enu.up, 1.0, rtol=1e-15)
 
-    def test_c_ecef2enu_east_direction(self):
+    def test_ecef2enuv_east_direction(self):
         """Test east direction transformation."""
         # At equator, prime meridian, ECEF y-axis points east in ENU
-        enu = C_ecef2enu(0.0, 1.0, 0.0, 0.0, 0.0)
+        enu = ecef2enuv(0.0, 1.0, 0.0, 0.0, 0.0)
         assert_allclose(enu.east, 1.0, rtol=1e-15)
         assert_allclose(enu.north, 0.0, atol=1e-15)
         assert_allclose(enu.up, 0.0, atol=1e-15)
 
-    def test_c_ecef2enu_north_direction(self):
+    def test_ecef2enuv_north_direction(self):
         """Test north direction transformation."""
         # At equator, prime meridian, ECEF z-axis points north in ENU
-        enu = C_ecef2enu(0.0, 0.0, 1.0, 0.0, 0.0)
+        enu = ecef2enuv(0.0, 0.0, 1.0, 0.0, 0.0)
         assert_allclose(enu.east, 0.0, atol=1e-15)
         assert_allclose(enu.north, 1.0, rtol=1e-15)
         assert_allclose(enu.up, 0.0, atol=1e-15)
@@ -253,7 +253,7 @@ class TestECEF2ENU:
 
     def test_ecef2enu_with_degrees(self):
         """Test ECEF to ENU with degree inputs."""
-        enu = C_ecef2enu(1.0, 0.0, 0.0, 0.0, 0.0, deg=True)
+        enu = ecef2enuv(1.0, 0.0, 0.0, 0.0, 0.0, deg=True)
         assert_allclose(enu.up, 1.0, rtol=1e-15)
 
 
@@ -283,18 +283,18 @@ class TestGeoetic2ENU:
 class TestENU2ECEF:
     """Test ENU to ECEF conversions."""
 
-    def test_c_enu2ecef_basic(self):
-        """Test basic C_enu2ecef transformation."""
+    def test_enu2ecefv_basic(self):
+        """Test basic enu2ecefv transformation."""
         # At equator, prime meridian, ENU up should give ECEF x
-        ecef = C_enu2ecef(0.0, 0.0, 1.0, 0.0, 0.0)
+        ecef = enu2ecefv(0.0, 0.0, 1.0, 0.0, 0.0)
         assert_allclose(ecef.x, 1.0, rtol=1e-15)
         assert_allclose(ecef.y, 0.0, atol=1e-15)
         assert_allclose(ecef.z, 0.0, atol=1e-15)
 
-    def test_c_enu2ecef_east_direction(self):
+    def test_enu2ecefv_east_direction(self):
         """Test east direction transformation."""
         # At equator, prime meridian, ENU east should give ECEF y
-        ecef = C_enu2ecef(1.0, 0.0, 0.0, 0.0, 0.0)
+        ecef = enu2ecefv(1.0, 0.0, 0.0, 0.0, 0.0)
         assert_allclose(ecef.x, 0.0, atol=1e-15)
         assert_allclose(ecef.y, 1.0, rtol=1e-15)
         assert_allclose(ecef.z, 0.0, atol=1e-15)
