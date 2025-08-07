@@ -2,7 +2,6 @@ from typing import Union
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_almost_equal
 
 # Assuming the module is imported as:
 from navtools.conversions.coordinates import (
@@ -20,6 +19,7 @@ from navtools.conversions.coordinates import (
     geodetic2enu,
 )
 from navtools.geodesy import GeodeticDatum
+from numpy.testing import assert_allclose, assert_array_almost_equal
 
 
 class TestCoordinateClasses:
