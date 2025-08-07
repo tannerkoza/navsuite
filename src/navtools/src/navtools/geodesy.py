@@ -151,7 +151,7 @@ def great_circle_distance(
 
     # Haversine formula
     a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
-    c = 2 * np.atan2(np.sqrt(a), np.sqrt(1 - a))
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
     # distance in meters
     distance = datum.r0 * c
