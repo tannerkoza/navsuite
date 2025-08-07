@@ -1,10 +1,12 @@
 __all__ = [
     "ecef2geodetic",
     "ecef2enu",
+    "ecef2enuv",
     "geodetic2ecef",
     "geodetic2enu",
     "enu2ecef",
     "enu2geodetic",
+    "enu2ecefv",
 ]
 
 
@@ -115,6 +117,7 @@ class ENU(NamedTuple):
     up: float | np.ndarray
 
 
+# earth-centered, earth-fixed (ECEF)
 def ecef2geodetic(
     x: float | np.ndarray,
     y: float | np.ndarray,
@@ -253,6 +256,67 @@ def ecef2geodetic(
 
 
 def C_ecef2enu(
+    lat0: float,
+    lon0: float,
+    deg: bool = False,
+):
+    """Compute the transformation matrix from ECEF to ENU coordinates.
+
+    This function calculates the 3x3 rotation matrix that transforms vectors
+    from the global Earth-Centered, Earth-Fixed (ECEF) coordinate system to
+    the local East-North-Up (ENU) coordinate system at a given reference
+    point on Earth's surface.
+
+    Parameters
+    ----------
+    lat0 : float
+        Latitude of the reference point in radians (default) or degrees.
+        Valid range: [-π/2, π/2] radians or [-90, 90] degrees.
+    lon0 : float
+        Longitude of the reference point in radians (default) or degrees.
+        Valid range: [-π, π] radians or [-180, 180] degrees.
+    deg : bool, optional
+        If True, treat lat0 and lon0 as degrees. If False (default),
+        treat them as radians.
+
+    Returns
+    -------
+    ndarray
+        A 3x3 rotation matrix of shape (3, 3) that transforms ECEF coordinates
+        to ENU coordinates. The matrix is orthonormal with determinant = 1.
+
+        Matrix structure:
+        - Row 0: Projects ECEF vectors onto local East direction
+        - Row 1: Projects ECEF vectors onto local North direction
+        - Row 2: Projects ECEF vectors onto local Up direction
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> # Reference point at 40°N, 75°W (using degrees)
+    >>> C = C_ecef2enu(40.0, -75.0, deg=True)
+    >>> print(C.shape)
+    (3, 3)
+    """
+    if deg:
+        lat0 = np.radians(lat0)
+        lon0 = np.radians(lon0)
+
+    cos_lat0 = np.cos(lat0)
+    sin_lat0 = np.sin(lat0)
+    cos_lon0 = np.cos(lon0)
+    sin_lon0 = np.sin(lon0)
+
+    return np.array(
+        [
+            [-sin_lon0, cos_lon0, 0],
+            [-sin_lat0 * cos_lon0, -sin_lat0 * sin_lon0, cos_lat0],
+            [cos_lat0 * cos_lon0, cos_lat0 * sin_lon0, sin_lat0],
+        ]
+    )
+
+
+def ecef2enuv(
     x: float | np.ndarray,
     y: float | np.ndarray,
     z: float | np.ndarray,
@@ -281,7 +345,7 @@ def C_ecef2enu(
     Examples
     --------
     >>> # simple example at equator prime meridian
-    >>> enu = C_ecef2enu(1, 0, 0, 0.0, 0.0)
+    >>> enu = ecef2enuv(1, 0, 0, 0.0, 0.0)
     >>> round(enu.east, 6), round(enu.north, 6), round(enu.up, 6)
     (-0.0, -0.0, 1.0)
     """
@@ -341,7 +405,7 @@ def ecef2enu(
     """
 
     x0, y0, z0 = geodetic2ecef(lat=lat0, lon=lon0, alt=alt0, datum=datum, deg=deg)
-    enu = C_ecef2enu(
+    enu = ecef2enuv(
         x=x - x0, y=y - y0, z=z - z0, lat0=lat0, lon0=lon0, deg=deg
     )  # Eqs. 2.158 and 2.160
 
@@ -439,13 +503,73 @@ def geodetic2enu(
     x, y, z = geodetic2ecef(lat=lat, lon=lon, alt=alt, datum=datum, deg=deg)
     x0, y0, z0 = geodetic2ecef(lat=lat0, lon=lon0, alt=alt0, datum=datum, deg=deg)
 
-    enu = C_ecef2enu(x=x - x0, y=y - y0, z=z - z0, lat0=lat0, lon0=lon0, deg=deg)
+    enu = ecef2enuv(x=x - x0, y=y - y0, z=z - z0, lat0=lat0, lon0=lon0, deg=deg)
 
     return enu
 
 
 # local navigation/tangent-plane (ENU)
 def C_enu2ecef(
+    lat0: float,
+    lon0: float,
+    deg: bool = False,
+):
+    """Compute the transformation matrix from ENU to ECEF coordinates.
+
+    This function calculates the 3x3 rotation matrix that transforms vectors
+    from the local East-North-Up (ENU) coordinate system to the global
+    Earth-Centered, Earth-Fixed (ECEF) coordinate system at a given reference
+    point on Earth's surface.
+
+    Parameters
+    ----------
+    lat0 : float
+        Latitude of the reference point in radians (default) or degrees.
+        Valid range: [-π/2, π/2] radians or [-90, 90] degrees.
+    lon0 : float
+        Longitude of the reference point in radians (default) or degrees.
+        Valid range: [-π, π] radians or [-180, 180] degrees.
+    deg : bool, optional
+        If True, treat lat0 and lon0 as degrees. If False (default),
+        treat them as radians.
+
+    Returns
+    -------
+    ndarray
+        A 3x3 rotation matrix of shape (3, 3) that transforms ENU coordinates
+        to ECEF coordinates. The matrix is orthonormal with determinant = 1.
+
+        Matrix structure:
+        - Row 0: Components of ENU-East vector in ECEF coordinates
+        - Row 1: Components of ENU-North vector in ECEF coordinates
+        - Row 2: Components of ENU-Up vector in ECEF coordinates
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> # Reference point at 40°N, 75°W (using degrees)
+    >>> C = C_enu2ecef(40.0, -75.0, deg=True)
+    >>> print(C.shape)
+    (3, 3)"""
+    if deg:
+        lat0 = np.radians(lat0)
+        lon0 = np.radians(lon0)
+
+    cos_lat0 = np.cos(lat0)
+    sin_lat0 = np.sin(lat0)
+    cos_lon0 = np.cos(lon0)
+    sin_lon0 = np.sin(lon0)
+
+    return np.array(
+        [
+            [-sin_lon0, -sin_lat0 * cos_lon0, cos_lat0 * cos_lon0],
+            [cos_lon0, -sin_lat0 * sin_lon0, cos_lat0 * sin_lon0],
+            [0, cos_lat0, sin_lat0],
+        ],
+    )
+
+
+def enu2ecefv(
     east: float | np.ndarray,
     north: float | np.ndarray,
     up: float | np.ndarray,
@@ -471,7 +595,7 @@ def C_enu2ecef(
 
     Examples
     --------
-    >>> ecef = C_enu2ecef(1, 0, 0, 0, 0)
+    >>> ecef = enu2ecefv(1, 0, 0, 0, 0)
     >>> round(ecef.x,6), round(ecef.y,6), round(ecef.z,6)
     (0.0, 0.0, 1.0)
     """
@@ -529,9 +653,7 @@ def enu2ecef(
     >>> round(ecef.z,6)
     1.0
     """
-    dx, dy, dz = C_enu2ecef(
-        east=east, north=north, up=up, lat0=lat0, lon0=lon0, deg=deg
-    )
+    dx, dy, dz = enu2ecefv(east=east, north=north, up=up, lat0=lat0, lon0=lon0, deg=deg)
 
     x0, y0, z0 = geodetic2ecef(
         lat=lat0, lon=lon0, alt=alt0, datum=datum, deg=deg
