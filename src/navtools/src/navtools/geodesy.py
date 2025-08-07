@@ -140,17 +140,25 @@ class GeodeticDatum:
 
 
 def great_circle_distance(
-    lat1, lon1, lat2, lon2, datum=GeodeticDatum.from_datum(datum_name="wgs84")
+    lat0,
+    lon0,
+    lat1,
+    lon1,
+    datum=GeodeticDatum.from_datum(datum_name="wgs84"),
+    deg: bool = False,
 ):
-    # convert degrees to radians
-    lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
+    if deg:
+        lat0 = np.radians(lat0)
+        lon0 = np.radians(lon0)
+        lat1 = np.radians(lat1)
+        lon1 = np.radians(lon1)
 
     # differences in coordinates
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
+    dlat = lat1 - lat0
+    dlon = lon1 - lon0
 
     # Haversine formula
-    a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
+    a = np.sin(dlat / 2) ** 2 + np.cos(lat0) * np.cos(lat1) * np.sin(dlon / 2) ** 2
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
     # distance in meters
