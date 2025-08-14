@@ -1,5 +1,7 @@
 import datetime as dt
 import pathlib as pl
+from collections import defaultdict
+from email.policy import default
 from typing import Generator
 
 import lcm
@@ -212,7 +214,7 @@ class MeasurementSimulation:
             )
 
             # compute emitter states, line-of-sight states, and visibility
-            satnav_data = {}
+            satnav_data = defaultdict(dict)
 
             for emitter_id, (emitter_pos_rx, emitter_vel_rx) in emitters.items():
                 # compute emitter states at transmit time
@@ -359,9 +361,9 @@ class MeasurementSimulation:
                     # filter by view status
                     aspn_satnav_obs[view_status == False] = None
 
-                    satnav_data[emitter_id] = {
-                        signal_name: (aspn_satnav_obs, aspn_satnav_sv_data)
-                    }
+                    satnav_data[emitter_id].update(
+                        {signal_name: (aspn_satnav_obs, aspn_satnav_sv_data)}
+                    )
 
             aspn_satnav, aspn_position, aspn_velocity = self._create_aspn_measurements(
                 aspn_headers=aspn_headers,
