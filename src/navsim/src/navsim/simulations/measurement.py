@@ -574,9 +574,9 @@ class MeasurementSimulation:
             fll_sigma = compute_fll_sigma(cn0=cn0, fcarrier=fcarrier)
             pll_sigma = compute_pll_sigma(cn0=cn0)
 
-            dll_noise = dll_sigma * np.random.randn()
-            fll_noise = fll_sigma * np.random.randn()
-            pll_noise = pll_sigma * np.random.randn()
+            dll_noise = dll_sigma * np.random.randn(dll_sigma.size)
+            fll_noise = fll_sigma * np.random.randn(fll_sigma.size)
+            pll_noise = pll_sigma * np.random.randn(pll_sigma.size)
 
         else:
             dll_sigma = np.zeros_like(cn0)
