@@ -1,6 +1,7 @@
 import numpy as np
 from navtools.conversions import ecef2enu, ecef2geodetic
 from navtools.utils import to_cartesian_series
+from numpy.typing import ArrayLike, NDArray
 
 
 def compute_visibility(
@@ -31,6 +32,17 @@ def compute_az_and_el(rx_pos: np.array, emitter_pos: np.array) -> tuple[float, f
     az = np.arctan2(enu.east, enu.north)
 
     return az, el
+
+
+def compute_range(rx_pos: NDArray, emitter_pos: NDArray):
+    rx_pos = to_cartesian_series(array=rx_pos)
+    emitter_pos = to_cartesian_series(array=emitter_pos)
+
+    pos_rx_emitter = rx_pos - emitter_pos  # position relative to emitter
+
+    range = np.linalg.norm(pos_rx_emitter, axis=1)
+
+    return range
 
 
 def compute_range_and_uv(
