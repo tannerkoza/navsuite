@@ -214,7 +214,7 @@ def create_trajectory(
     if valid_idx.size:
         last = valid_idx.max()
         rx_pos[nan_mask] = rx_pos[last]
-        rx_vel[nan_mask] = rx_vel[last]
+        rx_vel[nan_mask] = np.zeros(3)
 
     return rx_pos, rx_vel
 
