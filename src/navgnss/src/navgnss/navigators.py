@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from xml.etree.ElementInclude import include
 
 import numpy as np
+from navtools.constants import EARTH_RATE, SPEED_OF_LIGHT
+from navtools.conversions.coordinates import ecef2geodetic, geodetic2ecef
 from numpy.typing import NDArray
 
 from navgnss.los import compute_range
 from navgnss.observables import Observables
-from navtools.constants import EARTH_RATE, SPEED_OF_LIGHT
-from navtools.conversions.coordinates import ecef2geodetic, geodetic2ecef
 
 
 @dataclass
@@ -190,9 +190,7 @@ class WNLS:
         # ensure reference system is first in systems
         reference_system_order = (
             unique_systems != self._config.reference_system
-        ).astype(
-            int
-        )  # 0 for reference system, 1 for others
+        ).astype(int)  # 0 for reference system, 1 for others
         alphabetical_order = np.argsort(unique_systems)
         sort_indices = np.lexsort([alphabetical_order, reference_system_order])
 

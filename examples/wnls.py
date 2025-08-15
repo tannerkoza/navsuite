@@ -1,7 +1,6 @@
 import lcm
 import matplotlib.pyplot as plt
 import numpy as np
-
 from navgnss.navigators import WNLS, WNLSConfiguration
 from navgnss.observables import ObservablePreprocessor, aspn2observables
 from navplot.geo import GeoplotData, igeoplot

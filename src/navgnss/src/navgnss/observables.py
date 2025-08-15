@@ -2,9 +2,8 @@ from dataclasses import dataclass, fields, replace
 
 import numpy as np
 from aspn23_lcm import measurement_satnav_with_sv_data
-from numpy.typing import NDArray
-
 from navtools.constants import SPEED_OF_LIGHT
+from numpy.typing import NDArray
 
 
 @dataclass
