@@ -138,7 +138,9 @@ six==1.17.0
 tomli==2.2.1
     # via navsim
 tqdm==4.67.1
-    # via navsim
+    # via
+    #   navsim
+    #   navtools
 typing-extensions==4.14.1
     # via
     #   aiosignal

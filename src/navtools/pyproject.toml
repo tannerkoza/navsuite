@@ -11,6 +11,7 @@ dependencies = [
     "aspn23-lcm @ git+https://github.com/tannerkoza/aspn-python.git#subdirectory=aspn-lcm-py",
     "prompt-toolkit>=3.0.51",
     "aiohttp>=3.12.14",
+    "tqdm>=4.67.1",
 ]
 
 [build-system]
@@ -19,6 +20,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/navtools"]
+
+[[tool.uv.index]]
+url = "https://git.aspn.us/api/v4/projects/94/packages/pypi/simple"
 
 [tool.hatch.metadata]
 allow-direct-references = true
