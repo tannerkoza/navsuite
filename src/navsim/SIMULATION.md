@@ -113,21 +113,21 @@ The general section defines the fundamental simulation parameters:
 ### `pseudorange_awgn_sigma`
 
 - **Type**: Float
-- **Description**: Optional 1-$\sigma$ value (in meters) for generating user-defined additive white Gaussian pseudorange noise
+- **Description**: Optional 1-σ value (in meters) for generating user-defined additive white Gaussian pseudorange noise
 - **Example**: `5.0`
 - **Notes**: Can replace or supplement `rx_noise`, which is based on carrier-to-noise density ratio
 
 ### `doppler_awgn_sigma`
 
 - **Type**: Float
-- **Description**: Optional 1-$\sigma$ value (in Hz) for generating user-defined additive white Gaussian Doppler noise
+- **Description**: Optional 1-σ value (in Hz) for generating user-defined additive white Gaussian Doppler noise
 - **Example**: `2.0`
 - **Notes**: Can replace or supplement `rx_noise`, which is based on carrier-to-noise density ratio
 
 ### `carrier_phase_awgn_sigma`
 
 - **Type**: Float
-- **Description**: Optional 1-$\sigma$ value (in cycles) for generating user-defined additive white Gaussian carrier phase noise
+- **Description**: Optional 1-σ value (in cycles) for generating user-defined additive white Gaussian carrier phase noise
 - **Example**: `0.2`
 - **Notes**: Can replace or supplement `rx_noise`, which is based on carrier-to-noise density ratio
 
