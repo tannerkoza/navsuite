@@ -56,4 +56,5 @@ plt.plot_earth(
 )
 plt.plot_satellites(constellations=navplot_constellations, point_size=10)
 plt.add_triad()
+# plt.plot_ECEF(label_color="white")
 plt.show()

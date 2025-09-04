@@ -94,7 +94,7 @@ class NavPlotter(pv.Plotter):
         **kwargs,
     ):
         if "earth" not in self.actors.values():
-            self.plot_earth
+            self.plot_earth()
         # initialize seaborn color palette
         palette = sns.color_palette(color_palette).as_hex()
         color_cycle = itertools.cycle(palette)
@@ -141,6 +141,13 @@ class NavPlotter(pv.Plotter):
                 trajectories = _pyvista_lines_from_array(lines_array=positions)
                 self.add_mesh(mesh=trajectories, color=color)
 
+    def plot_ECEF(self, axis_scale: float = 0.5, **kwargs):
+        if "earth" not in self.actors.values():
+            self.plot_earth()
+        earth = self.actors["earth"]
+        axes = pv.AxesAssembly(scale=earth.length * axis_scale, **kwargs)
+        self.add_actor(axes)
+
     def add_triad(self, **kwargs):
         # create axes marker
         self.add_axes(
@@ -154,7 +161,7 @@ class NavPlotter(pv.Plotter):
             ylabel="y",
             zlabel="z",
             viewport=(0, 0, 0.3, 0.3),
-            **kwargs
+            **kwargs,
         )
 
 
