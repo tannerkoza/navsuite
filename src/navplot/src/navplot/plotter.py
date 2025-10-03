@@ -10,7 +10,7 @@ from navtools.conversions import ecef2geodetic, geodetic2ecef
 from navtools.geodesy import GeodeticDatum
 from navtools.utils import find_axis, ragged_to_array
 
-# currently private functions to satellite. Not sure on the organization for these so leaving as is for now
+# (TODO) currently private functions to satellite. Not sure on the organization for these so leaving as is for now
 from navplot.satellites import (
     NavplotConstellation,
     _find_first_valid_positions,
