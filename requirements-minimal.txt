@@ -58,8 +58,14 @@ idna==3.10
     #   yarl
 kiwisolver==1.4.8
     # via matplotlib
-lcm==1.5.1
-    # via aspn23-lcm
+lcm==1.5.1 ; sys_platform != 'darwin'
+    # via
+    #   aspn23-lcm
+    #   navsuite
+lcm @ git+https://github.com/lcm-proj/lcm@1db4322652f4e747bc1e98a3e9c85080bbe81652 ; sys_platform == 'darwin'
+    # via
+    #   aspn23-lcm
+    #   navsuite
 matplotlib==3.10.3
     # via
     #   pyvista

@@ -77,8 +77,14 @@ jinja2==3.1.6
 junit2html==31.0.2
 kiwisolver==1.4.8
     # via matplotlib
-lcm==1.5.1
-    # via aspn23-lcm
+lcm==1.5.1 ; sys_platform != 'darwin'
+    # via
+    #   aspn23-lcm
+    #   navsuite
+lcm @ git+https://github.com/lcm-proj/lcm@1db4322652f4e747bc1e98a3e9c85080bbe81652 ; sys_platform == 'darwin'
+    # via
+    #   aspn23-lcm
+    #   navsuite
 markupsafe==3.0.2
     # via jinja2
 matplotlib==3.10.3
