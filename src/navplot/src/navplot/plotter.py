@@ -143,7 +143,7 @@ class NavPlotter(pv.Plotter):
 
             self.add_legend(loc="lower right", size=(0.1, 0.1), face="none")
 
-    def plot_ECEF(self, axis_scale: float = 0.5, **kwargs):
+    def plot_ecef(self, axis_scale: float = 0.5, **kwargs):
         if "earth" not in self.actors.values():
             self.plot_earth()
         earth = self.actors["earth"]
