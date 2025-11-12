@@ -1,10 +1,9 @@
 import datetime as dt
 
 import numpy as np
-from navtools.conversions import geodetic2ecef
+from navplot.plotter import NavplotConstellation, NavPlotter
 from navsim.emitters import SatelliteEmitters
-
-from navplot.plotter import NavPlotter, NavplotConstellation
+from navtools.conversions import geodetic2ecef
 
 plt = NavPlotter()
 
