@@ -19,7 +19,7 @@ TRUE_POSITION_CHANNEL = "aspn23://navsim/true_measurement_position"
 TRUE_VELOCITY_CHANNEL = "aspn23://navsim/true_measurement_velocity"
 
 # pre-processing configuration
-INLCUDED_SYSTEMS = ["gps", "beidou"]
+INCLUDED_SYSTEMS = ["globalstar"]
 INCLUDED_SIGNALS = []
 
 # WNLS configuration

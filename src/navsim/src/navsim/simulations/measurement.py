@@ -158,6 +158,13 @@ class MeasurementSimulation:
                     pos_msg = data[1][idx]
                     vel_msg = data[2][idx]
 
+                    no_valid_timestamp_data = (
+                        satnav_msg is None or pos_msg is None or vel_msg is None
+                    )
+
+                    if no_valid_timestamp_data:
+                        continue
+
                     utime = int(satnav_msg.time_of_validity.elapsed_nsec * 1e-3)
 
                     # convert aspn-py to lcm
@@ -465,6 +472,11 @@ class MeasurementSimulation:
                 satnav_msgs.append(sv)
                 position_msgs.append(pos)
                 velocity_msgs.append(vel)
+
+            else:
+                satnav_msgs.append(None)
+                position_msgs.append(None)
+                velocity_msgs.append(None)
 
         return satnav_msgs, position_msgs, velocity_msgs
 

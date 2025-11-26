@@ -11,12 +11,12 @@ ionosphere = true
 troposphere = false
 
 
-[[constellation]]
-reference_constellation = "gps"
-signals = ["galileo_l1b"]
-mask_angle = 10                 # [deg]
-transmit_eirp = 29.5            # [dBW]
-cn0_attenuation = 20            # [dB]
+# [[constellation]]
+# reference_constellation = "gps"
+# signals = ["galileo_l1b"]
+# mask_angle = 10                 # [deg]
+# transmit_eirp = 29.5            # [dBW]
+# cn0_attenuation = 20            # [dB]
 
 [[constellation]]
 reference_constellation = "globalstar"
