@@ -362,7 +362,7 @@ class SatelliteEmitters:
         day = "%03d" % initial_time.tm_yday
 
         urls = [
-            f"https://raw.githubusercontent.com/tannerkoza/celestrak-orbital-data/main/{constellation.url_name}/{year}/{day}/{constellation.url_name}.tle"
+            f"https://raw.githubusercontent.com/navsuite/celestrak-orbital-data/main/{constellation.url_name}/{year}/{day}/{constellation.url_name}.tle"
             for constellation in self._tle_constellations.values()
         ]
 
