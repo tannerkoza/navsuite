@@ -7,10 +7,10 @@
 
 <div align="center">
 
-![GitHub Repo stars](https://img.shields.io/github/stars/tannerkoza/navsuite)
+![GitHub Repo stars](https://img.shields.io/github/stars/navsuite/navsuite)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/tannerkoza/navsuite)
-![GitHub issues](https://img.shields.io/github/issues/tannerkoza/navsuite)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/navsuite/navsuite)
+![GitHub issues](https://img.shields.io/github/issues/navsuite/navsuite)
 
 </div>
 
@@ -33,7 +33,7 @@
 
 ***navsuite*** was created to provide a centralized repository for Python tools that help facilitate positioning, navigation, and timing (PNT) research and development. This project combines a collection of previously created packages (and any future packages) into one project to allow for easy dependency management and quick feature additions.
 
-- **NOTE:** We are still very early in development as features are being added on an "as-needed" basis. Feel free to request new features in an [issue](https://github.com/tannerkoza/navsuite/issues/new) or refer to the [contributing instructions](/CONTRIBUTING.md) for adding your own features to merge in a [pull request](https://github.com/tannerkoza/navsuite/pulls).
+- **NOTE:** We are still very early in development as features are being added on an "as-needed" basis. Feel free to request new features in an [issue](https://github.com//navsuite/issues/new) or refer to the [contributing instructions](/CONTRIBUTING.md) for adding your own features to merge in a [pull request](https://github.com//navsuite/pulls).
 
 ## 🏁 Getting Started <a name = "getting-started"></a>
 
@@ -46,7 +46,7 @@ Python **3.10-3.12** are currently supported and tested against using the [`<ubu
 Currently, there are no stable releases of any package included in ***navsuite***. Therefore, there are no wheels readily available for download from any package index repository. However, each package can still be installed using the following command prototype:
 
 ```sh
-pip install "<package> @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/<package>"
+pip install "<package> @ git+https://github.com/navsuite/navsuite.git#subdirectory=src/<package>"
 ```
 In this command, `<package>` can simply be replaced by one of the package names in the `src/` directory (e.g., `navtools`). Additionally, these packages can be installed with any [PEP 517](https://peps.python.org/pep-0517/) compatible build system (in addition to `pip`) and their alternative to the above command.
 
@@ -57,9 +57,9 @@ In this command, `<package>` can simply be replaced by one of the package names 
 
 
 ## ✍️ Contributing <a name = "contributing"></a>
-Feel free to fork and submit [pull requests](https://github.com/tannerkoza/navsuite/pulls) for review after looking at the [contributing instructions](/CONTRIBUTING.md)! If you're interested in becoming a regular contributor, email me at [kozatanner@gmail.com](mailto:kozatanner@gmail.com).
+Feel free to fork and submit [pull requests](https://github.com/navsuite/navsuite/pulls) for review after looking at the [contributing instructions](/CONTRIBUTING.md)! If you're interested in becoming a regular contributor, email me at [kozatanner@gmail.com](mailto:kozatanner@gmail.com).
 
-![GitHub contributors](https://img.shields.io/github/contributors/tannerkoza/navsuite)
+![GitHub contributors](https://img.shields.io/github/contributors/navsuite/navsuite)
 
 
 ## 🎉 Acknowledgements <a name = "acknowledgement"></a>
