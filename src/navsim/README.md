@@ -7,10 +7,10 @@
 
 <div align="center">
 
-![GitHub Repo stars](https://img.shields.io/github/stars/tannerkoza/navsuite)
+![GitHub Repo stars](https://img.shields.io/github/stars/navsuite/navsuite)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/tannerkoza/navsuite/navsim)
-![GitHub issues](https://img.shields.io/github/issues/tannerkoza/navsuite/navsim)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/navsuite/navsuite/navsim)
+![GitHub issues](https://img.shields.io/github/issues/navsuite/navsuite/navsim)
 
 </div>
 
@@ -44,7 +44,7 @@ Python **3.10-3.12** are currently supported and tested against using the [`<ubu
 navsim can be installed directly from the navsuite repository:
 
 ```bash
-pip install "navsim @ git+https://github.com/tannerkoza/navsuite.git#subdirectory=src/navsim"
+pip install "navsim @ git+https://github.com/navsuite/navsuite.git#subdirectory=src/navsim"
 ```
 
 ### Development Installation
@@ -133,9 +133,9 @@ The executable generates:
 
 ## ✍️ Contributing <a name = "contributing"></a>
 
-navsim welcomes contributions as part of the navsuite project. Feel free to fork and submit [pull requests](https://github.com/tannerkoza/navsuite/pulls) for review after looking at the [contributing instructions](/CONTRIBUTING.md)! If you're interested in becoming a regular contributor, email me at [kozatanner@gmail.com](mailto:kozatanner@gmail.com).
+navsim welcomes contributions as part of the navsuite project. Feel free to fork and submit [pull requests](https://github.com/navsuite/navsuite/pulls) for review after looking at the [contributing instructions](/CONTRIBUTING.md)! If you're interested in becoming a regular contributor, email me at [kozatanner@gmail.com](mailto:kozatanner@gmail.com).
 
-![GitHub contributors](https://img.shields.io/github/contributors/tannerkoza/navsuite)
+![GitHub contributors](https://img.shields.io/github/contributors/navsuite/navsuite)
 
 ### Getting Started
 
@@ -145,14 +145,14 @@ navsim welcomes contributions as part of the navsuite project. Feel free to fork
 
 ### Requesting Features
 
-Submit feature requests as [GitHub Issues](https://github.com/tannerkoza/navsuite/issues/new). Features are added based on research and development needs.
+Submit feature requests as [GitHub Issues](https://github.com/navsuite/navsuite/issues/new). Features are added based on research and development needs.
 
 ### Pull Requests
 
 1. Fork the repository
 2. Create a feature branch
 3. Follow the contribution guidelines
-4. Submit a [pull request](https://github.com/tannerkoza/navsuite/pulls) for review
+4. Submit a [pull request](https://github.com/navsuite/navsuite/pulls) for review
 
 ### Becoming a Regular Contributor
 
